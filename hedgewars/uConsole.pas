@@ -36,8 +36,7 @@ begin
 {$IFNDEF NOCONSOLE}
     AddFileLog('[Con] ' + s);
 {$IFDEF ANDROID}
-    //TODO integrate this function in the uMobile record
-    Log.__android_log_write(Log.Android_LOG_DEBUG, 'HW_Engine', ShortStringAsPChar('[Con]' + s));
+    Log.__android_log_write(Log.Android_LOG_DEBUG, 'HW_Engine', Str2PChar('[Con]' + s));
 {$ELSE}
     Write(stderr, s);
 {$ENDIF}
@@ -54,15 +53,4 @@ begin
 {$ENDIF}
     lastConsoleline:= s;
 end;
-{$IFDEF ANDROID}
-function ShortStringAsPChar(s: shortstring) : PChar;
-begin
-    if Length(s) = High(s) then
-        Dec(s[0]);
-    s[Ord(Length(s))+1] := #0;
-    // returning pointer to stack, rly?
-    ShortStringAsPChar:= @s[1];
-end;
-{$ENDIF}
-
 end.

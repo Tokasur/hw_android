@@ -1,0 +1,80 @@
+<resources>
+    <!-- Menu principal -->
+    <string name="menu_quick_game">Partie rapide</string>
+    <string name="menu_local_game">Multijoueur local</string>
+    <string name="menu_missions">Missions et entraînement</string>
+    <string name="menu_teams">Équipes</string>
+    <string name="menu_settings">Réglages</string>
+    <string name="menu_about">À propos et licences</string>
+
+    <!-- Installation des données -->
+    <string name="data_installing">Installation des données du jeu…</string>
+    <string name="data_installing_detail">Cela n\'arrive qu\'au premier lancement et après une mise à jour.</string>
+    <string name="data_install_failed">Échec de l\'installation des données</string>
+    <string name="data_retry">Réessayer</string>
+
+    <!-- Partie rapide -->
+    <string name="quick_game_title">Partie rapide</string>
+    <string name="quick_game_difficulty">Difficulté de l\'IA</string>
+    <string name="quick_game_start">Combattre !</string>
+    <string name="difficulty_1">Brutale</string>
+    <string name="difficulty_2">Agressive</string>
+    <string name="difficulty_3">Moyenne</string>
+    <string name="difficulty_4">Faible</string>
+    <string name="difficulty_5">Très faible</string>
+    <string name="difficulty_0">Humain</string>
+
+    <!-- Multijoueur local -->
+    <string name="local_game_title">Multijoueur local</string>
+    <string name="local_game_add_team">Ajouter une équipe</string>
+    <string name="local_game_start">Lancer la partie</string>
+    <string name="local_game_need_teams">Ajoutez au moins deux équipes de couleurs différentes</string>
+    <string name="local_game_hogs_per_team">Hérissons par équipe</string>
+    <string name="local_game_map">Carte</string>
+    <string name="local_game_map_random">Carte aléatoire</string>
+    <string name="local_game_theme">Thème</string>
+    <string name="local_game_scheme">Schéma de jeu</string>
+    <string name="local_game_weapons">Jeu d\'armes</string>
+    <string name="local_game_preview">Générer l\'aperçu</string>
+
+    <!-- Missions -->
+    <string name="missions_title">Missions et entraînement</string>
+    <string name="missions_training">Entraînement</string>
+    <string name="missions_challenge">Défis</string>
+    <string name="missions_scenario">Scénarios</string>
+    <string name="missions_campaign">Campagnes</string>
+
+    <!-- Équipes -->
+    <string name="teams_title">Équipes</string>
+    <string name="teams_new">Nouvelle équipe</string>
+    <string name="teams_edit">Modifier l\'équipe</string>
+    <string name="teams_delete">Supprimer l\'équipe</string>
+    <string name="teams_name">Nom de l\'équipe</string>
+    <string name="teams_hog_names">Noms des hérissons</string>
+    <string name="teams_save">Enregistrer</string>
+
+    <!-- Réglages -->
+    <string name="settings_title">Réglages</string>
+    <string name="settings_audio">Son et musique</string>
+    <string name="settings_sound">Effets sonores</string>
+    <string name="settings_music">Musique</string>
+    <string name="settings_quality">Qualité graphique</string>
+    <string name="settings_quality_low">Qualité réduite (plus rapide)</string>
+    <string name="settings_show_fps">Afficher les FPS</string>
+    <string name="settings_gamepad">Manette</string>
+    <string name="settings_gamepad_enabled">Activer le mappage manette par défaut</string>
+    <string name="settings_controls_help">Aide des contrôles tactiles</string>
+
+    <!-- À propos -->
+    <string name="about_title">À propos</string>
+    <string name="about_gpl">Hedgewars est un logiciel libre sous licence GNU GPL v2. Ce port inclut le moteur Hedgewars, SDL2, Lua, PhysicsFS et d\'autres composants open source.</string>
+    <string name="about_source">Code source</string>
+
+    <!-- Jeu -->
+    <string name="game_error_title">Erreur du moteur</string>
+
+    <!-- Aide contrôles -->
+    <string name="controls_title">Contrôles</string>
+    <string name="controls_touch">Tactile : faites glisser pour déplacer la caméra, pincez pour zoomer. Utilisez les flèches à l\'écran pour marcher, le viseur pour ajuster l\'angle, le bouton de tir pour tirer (maintenez pour plus de puissance). Touchez votre hérisson ou le bouton dédié pour ouvrir le menu des armes. Touchez une cible pour les frappes aériennes.</string>
+    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, A saut, B salto arrière, X tir, Y menu des armes, Start pause.</string>
+</resources>
