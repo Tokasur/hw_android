@@ -30,7 +30,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.hedgewars.android.ui.theme.HedgewarsBackground
 import org.hedgewars.android.ui.theme.HwColors
 
 /**
@@ -44,37 +43,37 @@ fun HwScreen(
     scroll: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    HedgewarsBackground {
-        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (onBack != null) {
-                    Box(
-                        Modifier
-                            .size(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(HwColors.Panel)
-                            .clickable(onClick = onBack),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text("←", color = HwColors.Gold, fontSize = 22.sp)
-                    }
+    // The night-sky backdrop is provided once, app-wide (see MainActivity); this
+    // scaffold is transparent and just lays out the top bar and content on it.
+    Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (onBack != null) {
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(HwColors.Panel)
+                        .clickable(onClick = onBack),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("←", color = HwColors.Gold, fontSize = 22.sp)
                 }
-                Text(
-                    title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = HwColors.Gold,
-                    modifier = Modifier.padding(start = 12.dp),
-                )
             }
-            val inner = Modifier.fillMaxSize().padding(horizontal = 16.dp)
-            if (scroll) {
-                Column(inner.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) { content() }
-            } else {
-                Column(inner) { content() }
-            }
+            Text(
+                title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = HwColors.Gold,
+                modifier = Modifier.padding(start = 12.dp),
+            )
+        }
+        val inner = Modifier.fillMaxSize().padding(horizontal = 16.dp)
+        if (scroll) {
+            Column(inner.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) { content() }
+        } else {
+            Column(inner) { content() }
         }
     }
 }

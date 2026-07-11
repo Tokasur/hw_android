@@ -26,6 +26,7 @@ import org.hedgewars.android.ui.newgame.NewGameScreen
 import org.hedgewars.android.ui.settings.SettingsScreen
 import org.hedgewars.android.ui.teams.TeamEditScreen
 import org.hedgewars.android.ui.teams.TeamsScreen
+import org.hedgewars.android.ui.theme.HedgewarsBackground
 import org.hedgewars.android.ui.theme.HedgewarsTheme
 
 class MainActivity : ComponentActivity() {
@@ -57,18 +58,21 @@ private fun AppNavigation() {
         EngineErrorDialog(message = msg, onDismiss = { engineError = null })
     }
 
-    NavHost(navController = nav, startDestination = "home") {
-        composable("home") { HomeScreen(nav) }
-        composable("quick") { NewGameScreen(nav, NewGameMode.QUICK) }
-        composable("local") { NewGameScreen(nav, NewGameMode.MULTI) }
-        composable("missions") { MissionsScreen(nav) }
-        composable("teams") { TeamsScreen(nav) }
-        composable("teamEdit/{name}") { entry ->
-            TeamEditScreen(nav, entry.arguments?.getString("name"))
+    // One night-sky backdrop for the whole app; every screen renders on it.
+    HedgewarsBackground {
+        NavHost(navController = nav, startDestination = "home") {
+            composable("home") { HomeScreen(nav) }
+            composable("quick") { NewGameScreen(nav, NewGameMode.QUICK) }
+            composable("local") { NewGameScreen(nav, NewGameMode.MULTI) }
+            composable("missions") { MissionsScreen(nav) }
+            composable("teams") { TeamsScreen(nav) }
+            composable("teamEdit/{name}") { entry ->
+                TeamEditScreen(nav, entry.arguments?.getString("name"))
+            }
+            composable("teamEdit") { TeamEditScreen(nav, null) }
+            composable("settings") { SettingsScreen(nav) }
+            composable("about") { AboutScreen(nav) }
+            composable("controls") { ControlsScreen(nav) }
         }
-        composable("teamEdit") { TeamEditScreen(nav, null) }
-        composable("settings") { SettingsScreen(nav) }
-        composable("about") { AboutScreen(nav) }
-        composable("controls") { ControlsScreen(nav) }
     }
 }

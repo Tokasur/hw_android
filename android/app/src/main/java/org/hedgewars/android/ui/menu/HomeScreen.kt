@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.hedgewars.android.R
 import org.hedgewars.android.ui.common.HwButton
-import org.hedgewars.android.ui.theme.HedgewarsBackground
 
 /**
  * Main menu, styled after the desktop frontend: the Hedgewars title over the
@@ -31,35 +30,33 @@ import org.hedgewars.android.ui.theme.HedgewarsBackground
  */
 @Composable
 fun HomeScreen(nav: NavController) {
-    HedgewarsBackground {
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Image(
+            painter = painterResource(R.drawable.hedgewars_title),
+            contentDescription = stringResource(R.string.app_name),
+            contentScale = ContentScale.Fit,
             modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Image(
-                painter = painterResource(R.drawable.hedgewars_title),
-                contentDescription = stringResource(R.string.app_name),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 420.dp)
-                    .padding(bottom = 8.dp),
-            )
+                .fillMaxWidth()
+                .widthIn(max = 420.dp)
+                .padding(bottom = 8.dp),
+        )
 
-            val col = Modifier.fillMaxWidth().widthIn(max = 460.dp)
-            HwButton(stringResource(R.string.menu_quick_game), { nav.navigate("quick") }, col)
-            HwButton(stringResource(R.string.menu_local_game), { nav.navigate("local") }, col)
-            HwButton(stringResource(R.string.menu_missions), { nav.navigate("missions") }, col)
-            HwButton(stringResource(R.string.menu_teams), { nav.navigate("teams") }, col)
+        val col = Modifier.fillMaxWidth().widthIn(max = 460.dp)
+        HwButton(stringResource(R.string.menu_quick_game), { nav.navigate("quick") }, col)
+        HwButton(stringResource(R.string.menu_local_game), { nav.navigate("local") }, col)
+        HwButton(stringResource(R.string.menu_missions), { nav.navigate("missions") }, col)
+        HwButton(stringResource(R.string.menu_teams), { nav.navigate("teams") }, col)
 
-            HwButton(stringResource(R.string.menu_settings), { nav.navigate("settings") }, col, primary = false)
-            HwButton(stringResource(R.string.settings_controls_help), { nav.navigate("controls") }, col, primary = false)
-            HwButton(stringResource(R.string.menu_about), { nav.navigate("about") }, col, primary = false)
-        }
+        HwButton(stringResource(R.string.menu_settings), { nav.navigate("settings") }, col, primary = false)
+        HwButton(stringResource(R.string.settings_controls_help), { nav.navigate("controls") }, col, primary = false)
+        HwButton(stringResource(R.string.menu_about), { nav.navigate("about") }, col, primary = false)
     }
 }
