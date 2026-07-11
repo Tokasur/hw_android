@@ -32,7 +32,10 @@ fun HomeScreen(nav: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
-            painter = painterResource(R.mipmap.ic_launcher),
+            // NOT R.mipmap.ic_launcher: on API 26+ that resolves to an
+            // AdaptiveIconDrawable, which Compose's painterResource cannot
+            // paint (IllegalArgumentException) — use the plain PNG instead.
+            painter = painterResource(R.mipmap.ic_launcher_foreground),
             contentDescription = null,
             modifier = Modifier.size(96.dp),
         )
