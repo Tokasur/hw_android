@@ -177,8 +177,11 @@ var
     r, slr, w, si, li: LongWord;
 begin
     w:= surf^.w;
-    // just a single pixel, nothing to do here
-    if (w < 2) and (surf^.h < 2) then
+    // Nothing to prettify with fewer than two rows or columns. This MUST be
+    // 'or': with a 1-pixel-tall (or 1-wide) surface, 'surf^.h - 2' underflows
+    // the unsigned counter to ~4 billion and the loop reads far past the pixel
+    // buffer, crashing (SIGSEGV) at the first unmapped page.
+    if (w < 2) or (surf^.h < 2) then
         exit;
     slr:= surf^.h - 2;
     si:= 0;
@@ -199,6 +202,9 @@ var
     // current y; last x, second last y of array;
     y, lx, sly: LongWord;
 begin
+    // guard against the same unsigned underflow as PrettifySurfaceAlpha
+    if (width < 2) or (height < 2) then
+        exit;
     sly:= height - 2;
     lx:= width - 1;
     for y:= 0 to sly do

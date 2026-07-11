@@ -81,5 +81,8 @@ target_link_libraries(physlayer PRIVATE SDL2::SDL2 lua5.1 physfs)
 # --- SDL_main shim ----------------------------------------------------------
 add_library(main SHARED hedgewars_main.c)
 target_link_libraries(main PRIVATE SDL2::SDL2 dl log)
+if(DEFINED HW_CRASH_BACKTRACE)
+    target_compile_definitions(main PRIVATE HW_CRASH_BACKTRACE)
+endif()
 
 install(TARGETS lua5.1 physfs physlayer main LIBRARY DESTINATION lib)

@@ -44,7 +44,6 @@ import org.hedgewars.android.config.WeaponSet
 import org.hedgewars.android.data.MissionsRepository
 import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.TeamsRepository
-import org.hedgewars.android.engine.GameConnection
 import org.hedgewars.android.game.GameLauncher
 import org.hedgewars.android.ui.common.DropdownPicker
 
@@ -143,7 +142,7 @@ fun LocalGameScreen(nav: NavController) {
                           else MapChoice.Named(mapName),
                     theme = theme,
                 )
-                launcher.launchLocalGame(cfg, object : GameConnection.Listener {})
+                launcher.launchLocalGame(cfg)
             },
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.local_game_start)) }

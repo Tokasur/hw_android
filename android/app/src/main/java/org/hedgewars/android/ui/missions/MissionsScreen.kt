@@ -28,7 +28,6 @@ import org.hedgewars.android.config.MissionConfig
 import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.MissionsRepository
 import org.hedgewars.android.data.TeamsRepository
-import org.hedgewars.android.engine.GameConnection
 import org.hedgewars.android.game.GameLauncher
 
 @Composable
@@ -54,7 +53,6 @@ fun MissionsScreen(nav: NavController) {
         }
         launcher.launchMission(
             MissionConfig(team = team, script = script, campaign = campaign),
-            object : GameConnection.Listener {},
         )
     }
 

@@ -29,7 +29,6 @@ import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.TeamSlot
 import org.hedgewars.android.data.TeamsRepository
 import org.hedgewars.android.game.GameLauncher
-import org.hedgewars.android.engine.GameConnection
 
 /**
  * One-tap solo game: the player's first team against a CPU team.
@@ -78,7 +77,7 @@ fun QuickGameScreen(nav: NavController) {
                         TeamSlot(cpu.copy(difficulty = difficulty), colorIndex = 1),
                     ),
                 )
-                launcher.launchLocalGame(cfg, object : GameConnection.Listener {})
+                launcher.launchLocalGame(cfg)
             },
             modifier = Modifier.fillMaxWidth(),
         ) {

@@ -232,13 +232,19 @@ game to freeze if one online player minimizes Hedgewars. *)
 {$ENDIF}
                         SDL_WINDOWEVENT_RESTORED:
                                 begin
-                                if GameState = gsSuspend then
-                                    GameState:= previousGameState;
                                 cWindowedMaximized:= false;
 {$IFDEF ANDROID}
-                                //This call is used to reinitialize the glcontext and reload the textures
-                                ParseCommand('fullscr '+intToStr(LongInt(cFullScreen)), true);
+                                // Rebuild the GL context and reload all textures
+                                // ONLY when returning from a real suspend (the
+                                // context was destroyed while backgrounded). A
+                                // spurious RESTORED at first window show would
+                                // otherwise run a destructive reload that
+                                // segfaults before the first game frame.
+                                if GameState = gsSuspend then
+                                    ParseCommand('fullscr '+intToStr(LongInt(cFullScreen)), true);
 {$ENDIF}
+                                if GameState = gsSuspend then
+                                    GameState:= previousGameState;
                                 end;
                         SDL_WINDOWEVENT_MAXIMIZED:
                                 cWindowedMaximized:= true;

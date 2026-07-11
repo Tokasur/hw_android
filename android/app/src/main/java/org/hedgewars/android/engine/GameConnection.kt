@@ -3,6 +3,7 @@ package org.hedgewars.android.engine
 import android.util.Log
 import java.io.Closeable
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -36,7 +37,13 @@ class GameConnection(
         fun setVar(campaign: Boolean, name: String, value: String)
     }
 
-    private val server = ServerSocket(0, 1, InetAddress.getLoopbackAddress())
+    // Bind the IPv4 loopback explicitly: the engine (uIO.pas) connects to
+    // "127.0.0.1", so a server bound to the IPv6 loopback (::1, what
+    // getLoopbackAddress() may return) would refuse the connection.
+    private val server = ServerSocket().apply {
+        reuseAddress = true
+        bind(InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0), 1)
+    }
     val port: Int get() = server.localPort
 
     @Volatile

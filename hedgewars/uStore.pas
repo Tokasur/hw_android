@@ -919,12 +919,13 @@ begin
 {$ELSE}
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     {$IFDEF ANDROID}
-    // The engine renders with the fixed-function OpenGL ES 1.1 API (gles11 /
-    // libGLESv1_CM). SDL2's Android backend defaults to an ES 2 context, on
-    // which the ES 1.1 calls are invalid; ask EGL for an ES 1.1 context
-    // explicitly (as the iOS port does).
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    // The engine issues fixed-function OpenGL ES 1.1 calls, but they are
+    // routed through gl4es (see gles11.pp), which needs a real ES 2.0 context
+    // underneath. Request ES 2.0 explicitly so gl4es has an ES2 context to
+    // translate into — this is the reliable path on modern GPUs and on the
+    // emulator's SwiftShader, both of which have flaky native ES 1.1.
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 4); // SDL_GL_CONTEXT_PROFILE_ES
     {$ENDIF}
 {$ENDIF}
