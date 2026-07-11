@@ -24,8 +24,8 @@ android {
         applicationId = "org.hedgewars.android"
         minSdk = 21
         targetSdk = 36
-        versionCode = 100 // major*10000 + minor*100 + patch
-        versionName = "0.1.0"
+        versionCode = 101 // major*10000 + minor*100 + patch
+        versionName = "0.1.1"
     }
 
     signingConfigs {
