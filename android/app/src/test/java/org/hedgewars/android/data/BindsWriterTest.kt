@@ -27,10 +27,15 @@ class BindsWriterTest {
     }
 
     @Test
-    fun `disabled gamepad leaves empty section`() {
+    fun `disabled gamepad keeps only the back-button bind`() {
         val lines = writeTo(false)
         assertTrue(lines.contains("[Binds]"))
-        assertFalse(lines.any { it.contains("=") })
+        assertEquals(listOf("quit=ac_back"), lines.filter { it.contains("=") })
+    }
+
+    @Test
+    fun `back button is bound to engine quit for everyone`() {
+        assertTrue(writeTo(true).contains("quit=ac_back"))
     }
 
     @Test

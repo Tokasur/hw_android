@@ -24,6 +24,9 @@ class GameActivity : SDLActivity() {
         intent.getStringArrayExtra(EXTRA_ENGINE_ARGS) ?: emptyArray()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Deliver the back button to the engine as the "ac_back" key (bound
+        // to the quit-confirmation) instead of finishing the activity.
+        android.system.Os.setenv("SDL_ANDROID_TRAP_BACK_BUTTON", "1", true)
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
