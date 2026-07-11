@@ -4,12 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,13 +19,14 @@ import org.hedgewars.android.ui.error.EngineErrorDialog
 import org.hedgewars.android.ui.about.AboutScreen
 import org.hedgewars.android.ui.about.ControlsScreen
 import org.hedgewars.android.ui.install.InstallGate
-import org.hedgewars.android.ui.localgame.LocalGameScreen
 import org.hedgewars.android.ui.menu.HomeScreen
 import org.hedgewars.android.ui.missions.MissionsScreen
-import org.hedgewars.android.ui.quick.QuickGameScreen
+import org.hedgewars.android.ui.newgame.NewGameMode
+import org.hedgewars.android.ui.newgame.NewGameScreen
 import org.hedgewars.android.ui.settings.SettingsScreen
 import org.hedgewars.android.ui.teams.TeamEditScreen
 import org.hedgewars.android.ui.teams.TeamsScreen
+import org.hedgewars.android.ui.theme.HedgewarsTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,23 +40,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-private fun HedgewarsTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
-    val colors = if (dark) {
-        darkColorScheme(
-            primary = Color(0xFFF5A623),
-            background = Color(0xFF0E1C2E),
-            surface = Color(0xFF16283E),
-        )
-    } else {
-        lightColorScheme(
-            primary = Color(0xFFB97400),
-        )
-    }
-    MaterialTheme(colorScheme = colors, content = content)
 }
 
 @Composable
@@ -80,8 +59,8 @@ private fun AppNavigation() {
 
     NavHost(navController = nav, startDestination = "home") {
         composable("home") { HomeScreen(nav) }
-        composable("quick") { QuickGameScreen(nav) }
-        composable("local") { LocalGameScreen(nav) }
+        composable("quick") { NewGameScreen(nav, NewGameMode.QUICK) }
+        composable("local") { NewGameScreen(nav, NewGameMode.MULTI) }
         composable("missions") { MissionsScreen(nav) }
         composable("teams") { TeamsScreen(nav) }
         composable("teamEdit/{name}") { entry ->
