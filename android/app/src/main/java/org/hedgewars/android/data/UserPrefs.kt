@@ -1,0 +1,31 @@
+package org.hedgewars.android.data
+
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.core.content.edit
+
+/** Frontend settings (audio, quality, gamepad) backed by SharedPreferences. */
+class UserPrefs(context: Context) {
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("hedgewars", Context.MODE_PRIVATE)
+
+    var sound: Boolean
+        get() = prefs.getBoolean("sound", true)
+        set(v) = prefs.edit { putBoolean("sound", v) }
+
+    var music: Boolean
+        get() = prefs.getBoolean("music", true)
+        set(v) = prefs.edit { putBoolean("music", v) }
+
+    var showFps: Boolean
+        get() = prefs.getBoolean("showFps", false)
+        set(v) = prefs.edit { putBoolean("showFps", v) }
+
+    var lowQuality: Boolean
+        get() = prefs.getBoolean("lowQuality", false)
+        set(v) = prefs.edit { putBoolean("lowQuality", v) }
+
+    var gamepadBinds: Boolean
+        get() = prefs.getBoolean("gamepadBinds", true)
+        set(v) = prefs.edit { putBoolean("gamepadBinds", v) }
+}
