@@ -1,3 +1,5 @@
+⚠️ WORK IN PROGRESS ⚠️
+
 Hedgewars - a turn-based strategy game
 ======================================
 [![Build Status](https://travis-ci.org/hedgewars/hw.svg)](https://travis-ci.org/hedgewars/hw)
