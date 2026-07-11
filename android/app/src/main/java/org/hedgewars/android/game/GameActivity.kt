@@ -2,6 +2,7 @@ package org.hedgewars.android.game
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Process
 import android.util.Log
@@ -40,10 +41,24 @@ class GameActivity : SDLActivity() {
         return base.toTypedArray()
     }
 
+    // Hedgewars is a landscape game. SDL, seeing a resizable window with no
+    // orientation hint, calls setRequestedOrientation(SCREEN_ORIENTATION_FULL_USER),
+    // which obeys the device's rotation lock and can pin us to portrait — the
+    // engine then paints its 2138x1080 landscape frame into a 1080x2138 portrait
+    // surface, so the whole game collapses into a corner. Pin sensor-landscape
+    // instead, ignoring whatever SDL computed from the (resizable) window.
+    override fun setOrientationBis(w: Int, h: Int, resizable: Boolean, hint: String) {
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Deliver the back button to the engine as the "ac_back" key (bound
         // to the quit-confirmation) instead of finishing the activity.
         android.system.Os.setenv("SDL_ANDROID_TRAP_BACK_BUTTON", "1", true)
+        // Belt-and-suspenders: also hand SDL the orientation hint so its own
+        // bookkeeping agrees with the forced request above (SDL_HINT_ORIENTATIONS
+        // == "SDL_IOS_ORIENTATIONS", read from the environment by SDL_GetHint).
+        android.system.Os.setenv("SDL_IOS_ORIENTATIONS", "LandscapeLeft LandscapeRight", true)
 
         val config = intent.getStringArrayExtra(EXTRA_CONFIG)?.toList() ?: emptyList()
         val varStore = intent.getStringExtra(EXTRA_CAMPAIGN_TEAM)?.let { team ->
