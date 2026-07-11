@@ -913,11 +913,20 @@ begin
 {$IFDEF IPHONEOS}
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
     SDL_GL_SetAttribute(SDL_GL_RETAINED_BACKING, 1);
- 
+
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 {$ELSE}
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    {$IFDEF ANDROID}
+    // The engine renders with the fixed-function OpenGL ES 1.1 API (gles11 /
+    // libGLESv1_CM). SDL2's Android backend defaults to an ES 2 context, on
+    // which the ES 1.1 calls are invalid; ask EGL for an ES 1.1 context
+    // explicitly (as the iOS port does).
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 4); // SDL_GL_CONTEXT_PROFILE_ES
+    {$ENDIF}
 {$ENDIF}
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);

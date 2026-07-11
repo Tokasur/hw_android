@@ -11,6 +11,7 @@ import org.hedgewars.android.data.CampaignStore
 import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.UserPrefs
 import org.hedgewars.android.engine.EngineArgs
+import org.hedgewars.android.engine.EngineOutcome
 import org.hedgewars.android.engine.GameConnection
 
 /**
@@ -47,7 +48,23 @@ class GameLauncher(private val context: Context) {
         paths.ensureUserDirs()
         BindsWriter.write(paths.settingsIni, prefs.gamepadBinds)
 
-        val conn = GameConnection(config, listener, varStore)
+        // Record how this run ends so MainActivity can surface engine errors
+        // (IPC 'E') and native crashes (socket closed with no clean finish)
+        // instead of silently dropping back to the menu.
+        EngineOutcome.markRunning(context)
+        val recording = object : GameConnection.Listener {
+            override fun onEngineError(message: String) {
+                EngineOutcome.markError(context, message)
+                listener.onEngineError(message)
+            }
+            override fun onGameFinished(interrupted: Boolean) {
+                EngineOutcome.markFinished(context)
+                listener.onGameFinished(interrupted)
+            }
+            override fun onStats(kind: Char, text: String) = listener.onStats(kind, text)
+        }
+
+        val conn = GameConnection(config, recording, varStore)
         connection = conn
         conn.start()
 

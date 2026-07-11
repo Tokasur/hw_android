@@ -42,6 +42,14 @@ add_library(lua5.1 SHARED ${LUA_SRCS})
 # The engine's LuaPas.pas does {$linklib lua} -> DT_NEEDED liblua.so
 set_target_properties(lua5.1 PROPERTIES OUTPUT_NAME "lua")
 target_compile_definitions(lua5.1 PRIVATE ANDROID LUA_USE_POSIX LUA_USE_DLOPEN)
+# Lua stores each string's bytes in a flexible array after the TString header.
+# clang -O2 rewrites Lua's internal byte scans into strchr()/strpbrk(); with the
+# NDK's default _FORTIFY_SOURCE=2 those become __*_chk calls whose object-size
+# check cannot see past the flexible array and aborts at GC time
+# ("FORTIFY: strchr: prevented read past end of buffer") — a false positive that
+# crashes the engine the instant a Lua script loads. Lua null-terminates every
+# string, so the unfortified scans are safe.
+target_compile_options(lua5.1 PRIVATE -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0)
 target_include_directories(lua5.1 PUBLIC "${LUA_DIR}")
 target_link_libraries(lua5.1 PRIVATE dl)
 

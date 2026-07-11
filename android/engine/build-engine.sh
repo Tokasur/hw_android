@@ -74,6 +74,7 @@ for abi in "${ABIS[@]}"; do
     log "[$abi] FPC compile (hwLibrary.pas)"
     ( cd "$out" && \
       "$FPC_PREFIX/$ppc" -Tandroid $cpuopt -Cn -O2 -Xs \
+        -dDEBUGFILE \
         -FD"$WRAPPERS" \
         -Fu"$units/"'*' \
         -Fu"$REPO_ROOT/hedgewars" \
