@@ -23,9 +23,17 @@ interface
 
 procedure GetParams;
 {$IFDEF HWLIBRARY}
-var operatingsystem_parameter_argc: LongInt = 0; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
-    operatingsystem_parameter_argv: pointer = nil; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
-    operatingsystem_parameter_envp: pointer = nil; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cdecl;{$ENDIF} export;{$ENDIF}
+{$IFDEF ANDROID}
+// The FPC Android RTL already owns these startup variables (they are set by
+// the shared-library entry code); redefining them makes duplicate symbols.
+var operatingsystem_parameter_argc: LongInt; external name 'operatingsystem_parameter_argc';
+    operatingsystem_parameter_argv: pointer; external name 'operatingsystem_parameter_argv';
+    operatingsystem_parameter_envp: pointer; external name 'operatingsystem_parameter_envp';
+{$ELSE}
+var operatingsystem_parameter_argc: LongInt = 0; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cvar;{$ENDIF} export;{$ENDIF}
+    operatingsystem_parameter_argv: pointer = nil; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cvar;{$ENDIF} export;{$ENDIF}
+    operatingsystem_parameter_envp: pointer = nil; {$IFNDEF PAS2C}{$IFNDEF IPHONEOS}cvar;{$ENDIF} export;{$ENDIF}
+{$ENDIF}
 
 function ParamCount: LongInt;
 function ParamStr(i: LongInt): shortstring;

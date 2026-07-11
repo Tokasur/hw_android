@@ -106,7 +106,12 @@ end;
 
 procedure JNI_HW_GenLandPreview(env: PJNIEnv; c: JClass; port: JInt); cdecl;
 begin
-    GenLandPreview(port);
+    // GenLandPreview no longer takes the port as a parameter; it reads
+    // ipcPort/GameType, which used to be set from --port/--landpreview.
+    preInitEverything();
+    ipcPort:= Word(port);
+    GameType:= gmtLandPreview;
+    GenLandPreview();
 end;
 
 exports
@@ -116,6 +121,7 @@ exports
     HW_getNumberOfweapons name Java_Prefix + 'HWgetNumberOfWeapons',
     HW_getMaxNumberOfHogs name Java_Prefix + 'HWgetMaxNumberOfHogs',
     HW_getMaxNumberOfTeams name Java_Prefix + 'HWgetMaxNumberOfTeams',
+    RunEngine,
     Game;
 {$ELSE}
 exports

@@ -45,6 +45,8 @@ uses {$IFDEF IPHONEOS}cmem, {$ENDIF} SDLh, uMisc, uConsole, uGame, uConsts, uLan
 {$IFDEF HWLIBRARY}
 function RunEngine(argc: LongInt; argv: PPChar): LongInt; cdecl; export;
 
+procedure Game;
+procedure GenLandPreview;
 procedure preInitEverything();
 procedure initEverything(complete:boolean);
 procedure freeEverything(complete:boolean);

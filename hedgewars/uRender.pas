@@ -381,7 +381,7 @@ begin
 //TODO: pas2c does not handle
 {$IFNDEF PAS2C}
 // FreePascal doesnt come with OpenGL ES 1.1 Extension headers
-{$IF GLunit <> gles11}
+{$IFNDEF MOBILE} // mobile targets use GLES 1.1 (GLunit = gles11)
 
     glLoadExtension:= glext_LoadExtension(extension);
 
