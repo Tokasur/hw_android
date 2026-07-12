@@ -67,12 +67,29 @@ class GameActivity : SDLActivity() {
     private class ScaledSDLSurface(context: Context, private val scale: Float) :
         SDLSurface(context) {
 
+        private var appliedW = 0
+        private var appliedH = 0
+
+        // Always fill the window. Without this the view can re-measure to the
+        // fixed-size buffer's dimensions (observed: view collapsed to the
+        // previous buffer size, the game shrinking to a quarter of the screen
+        // in the corner), which would then feed back into onSizeChanged and
+        // halve the buffer again on every pass.
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+            setMeasuredDimension(
+                MeasureSpec.getSize(widthMeasureSpec),
+                MeasureSpec.getSize(heightMeasureSpec),
+            )
+        }
+
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
             super.onSizeChanged(w, h, oldw, oldh)
             if (w > 0 && h > 0 && scale > 1.001f) {
                 val rw = ((w / scale).toInt() / 2) * 2
                 val rh = ((h / scale).toInt() / 2) * 2
-                if (rw >= 2 && rh >= 2) {
+                if (rw >= 2 && rh >= 2 && (rw != appliedW || rh != appliedH)) {
+                    appliedW = rw
+                    appliedH = rh
                     Log.i(TAG, "render buffer ${rw}x$rh for view ${w}x$h (scale $scale)")
                     holder.setFixedSize(rw, rh)
                 }
