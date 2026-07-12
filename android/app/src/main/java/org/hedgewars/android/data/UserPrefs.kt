@@ -28,4 +28,13 @@ class UserPrefs(context: Context) {
     var gamepadBinds: Boolean
         get() = prefs.getBoolean("gamepadBinds", true)
         set(v) = prefs.edit { putBoolean("gamepadBinds", v) }
+
+    /**
+     * In-game UI scale: "auto" (default) or a fixed factor ("1.0", "1.5",
+     * "2.0", "2.5"). The game renders at screen-size / factor and Android
+     * upscales, so a bigger factor means bigger touch buttons and HUD.
+     */
+    var uiScale: String
+        get() = prefs.getString("uiScale", "auto") ?: "auto"
+        set(v) = prefs.edit { putString("uiScale", v) }
 }

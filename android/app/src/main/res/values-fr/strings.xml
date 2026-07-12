@@ -61,6 +61,13 @@
     <string name="settings_quality">Qualité graphique</string>
     <string name="settings_quality_low">Qualité réduite (plus rapide)</string>
     <string name="settings_show_fps">Afficher les FPS</string>
+    <string name="settings_ui">Interface en jeu</string>
+    <string name="settings_ui_scale">Taille des boutons et de l\'interface</string>
+    <string name="settings_ui_scale_auto">Auto (recommandé)</string>
+    <string name="settings_ui_scale_100">100 % (petite)</string>
+    <string name="settings_ui_scale_150">150 %</string>
+    <string name="settings_ui_scale_200">200 % (grande)</string>
+    <string name="settings_ui_scale_250">250 % (très grande)</string>
     <string name="settings_gamepad">Manette</string>
     <string name="settings_gamepad_enabled">Activer le mappage manette par défaut</string>
     <string name="settings_controls_help">Aide des contrôles tactiles</string>

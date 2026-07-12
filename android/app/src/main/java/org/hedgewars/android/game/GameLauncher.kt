@@ -43,8 +43,18 @@ class GameLauncher(private val context: Context) {
         BindsWriter.write(paths.settingsIni, prefs.gamepadBinds)
 
         val metrics: DisplayMetrics = context.resources.displayMetrics
-        val width = maxOf(metrics.widthPixels, metrics.heightPixels)
-        val height = minOf(metrics.widthPixels, metrics.heightPixels)
+        val physWidth = maxOf(metrics.widthPixels, metrics.heightPixels)
+        val physHeight = minOf(metrics.widthPixels, metrics.heightPixels)
+
+        // The engine's touch UI is sized in raw pixels (100x100 arrows...);
+        // at phone densities that is ~6 mm — unusable. Render at a reduced
+        // resolution instead (Android upscales the surface for free): the
+        // buttons and HUD grow back to the physical size they were designed
+        // for. The exact buffer size is applied by ScaledSDLSurface; these
+        // args just need to be close (SDL's resize event fixes the rest).
+        val scale = uiScale(physHeight, prefs.uiScale)
+        val width = ((physWidth / scale).toInt() / 2) * 2
+        val height = ((physHeight / scale).toInt() / 2) * 2
 
         // The port is a placeholder: GameActivity opens the server and injects
         // the real port before the engine reads its arguments.
@@ -60,9 +70,9 @@ class GameLauncher(private val context: Context) {
             showFps = prefs.showFps,
             lowQuality = prefs.lowQuality,
         )
-        Log.i(TAG, "launching game with ${config.size} config commands")
+        Log.i(TAG, "launching game at ${width}x$height (ui scale $scale) with ${config.size} config commands")
         context.startActivity(
-            GameActivity.intent(context, args.toList(), config, campaignTeam, campaignScope)
+            GameActivity.intent(context, args.toList(), config, scale, campaignTeam, campaignScope)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
@@ -76,5 +86,20 @@ class GameLauncher(private val context: Context) {
 
     companion object {
         private const val TAG = "HWGameLauncher"
+
+        /**
+         * Resolve the render-scale factor for the in-game UI.
+         *
+         * "auto" targets an effective landscape height of ~560 px — the class
+         * of screen (800x480…1280x720) the engine's fixed-pixel touch UI was
+         * designed for — in quarter steps: a 1080 px-tall phone gets x2
+         * (buttons ~12 mm instead of ~6 mm), a 720 px screen ~x1.25, anything
+         * at or below 560 px stays at x1.
+         */
+        fun uiScale(landscapeHeightPx: Int, pref: String): Float {
+            pref.toFloatOrNull()?.let { return it.coerceIn(1f, 3f) }
+            val quarters = Math.round(landscapeHeightPx / 560f * 4f)
+            return (quarters / 4f).coerceIn(1f, 3f)
+        }
     }
 }

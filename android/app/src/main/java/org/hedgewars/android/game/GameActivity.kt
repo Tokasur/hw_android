@@ -3,15 +3,18 @@ package org.hedgewars.android.game
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.graphics.Matrix
 import android.os.Bundle
 import android.os.Process
 import android.util.Log
+import android.view.MotionEvent
 import android.view.WindowManager
 import org.hedgewars.android.data.CampaignStore
 import org.hedgewars.android.engine.EngineLoader
 import org.hedgewars.android.engine.EngineOutcome
 import org.hedgewars.android.engine.GameConnection
 import org.libsdl.app.SDLActivity
+import org.libsdl.app.SDLSurface
 
 /**
  * Hosts the Free Pascal engine through SDL.
@@ -49,6 +52,48 @@ class GameActivity : SDLActivity() {
     // instead, ignoring whatever SDL computed from the (resizable) window.
     override fun setOrientationBis(w: Int, h: Int, resizable: Boolean, hint: String) {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    }
+
+    override fun createSDLSurface(context: Context): SDLSurface =
+        ScaledSDLSurface(context, intent.getFloatExtra(EXTRA_UI_SCALE, 1f).coerceIn(1f, 4f))
+
+    /**
+     * SDL surface with a reduced fixed-size buffer that Android upscales to
+     * the full view. The engine's touch buttons and HUD are sized in raw
+     * pixels, so rendering at view-size / [scale] makes them [scale]x bigger
+     * physically (and cuts the pixels to render by scale^2).
+     */
+    private class ScaledSDLSurface(context: Context, private val scale: Float) :
+        SDLSurface(context) {
+
+        override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+            super.onSizeChanged(w, h, oldw, oldh)
+            if (w > 0 && h > 0 && scale > 1.001f) {
+                val rw = ((w / scale).toInt() / 2) * 2
+                val rh = ((h / scale).toInt() / 2) * 2
+                if (rw >= 2 && rh >= 2) {
+                    Log.i(TAG, "render buffer ${rw}x$rh for view ${w}x$h (scale $scale)")
+                    holder.setFixedSize(rw, rh)
+                }
+            }
+        }
+
+        override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+            // SDLSurface.onTouch normalizes coordinates by the *buffer* size
+            // (mWidth/mHeight); with a fixed-size buffer the incoming view
+            // coordinates must be shrunk to buffer space first, or every
+            // touch lands beyond the bottom-right of the game.
+            val vw = width.toFloat()
+            val vh = height.toFloat()
+            if (vw > 0f && vh > 0f && mWidth > 2f && (mWidth != vw || mHeight != vh)) {
+                val copy = MotionEvent.obtain(ev)
+                copy.transform(Matrix().apply { setScale(mWidth / vw, mHeight / vh) })
+                val handled = super.dispatchTouchEvent(copy)
+                copy.recycle()
+                return handled
+            }
+            return super.dispatchTouchEvent(ev)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +138,7 @@ class GameActivity : SDLActivity() {
         private const val TAG = "HWGameActivity"
         const val EXTRA_ENGINE_ARGS = "org.hedgewars.android.ENGINE_ARGS"
         const val EXTRA_CONFIG = "org.hedgewars.android.CONFIG"
+        const val EXTRA_UI_SCALE = "org.hedgewars.android.UI_SCALE"
         const val EXTRA_CAMPAIGN_TEAM = "org.hedgewars.android.CAMPAIGN_TEAM"
         const val EXTRA_CAMPAIGN_SCOPE = "org.hedgewars.android.CAMPAIGN_SCOPE"
 
@@ -100,12 +146,14 @@ class GameActivity : SDLActivity() {
             context: Context,
             engineArgs: List<String>,
             config: List<String>,
+            uiScale: Float = 1f,
             campaignTeam: String? = null,
             campaignScope: String? = null,
         ): Intent =
             Intent(context, GameActivity::class.java)
                 .putExtra(EXTRA_ENGINE_ARGS, engineArgs.toTypedArray())
                 .putExtra(EXTRA_CONFIG, config.toTypedArray())
+                .putExtra(EXTRA_UI_SCALE, uiScale)
                 .putExtra(EXTRA_CAMPAIGN_TEAM, campaignTeam)
                 .putExtra(EXTRA_CAMPAIGN_SCOPE, campaignScope)
     }
