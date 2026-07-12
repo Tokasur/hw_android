@@ -159,10 +159,25 @@ class GameActivity : SDLActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
+    // Outcome bookkeeping across backgrounding: swiping the task away kills
+    // this process WITHOUT onDestroy, so a "running" state would be
+    // misreported as a crash by the menu. Downgrade to ok whenever the
+    // activity leaves the screen (the engine auto-pauses then anyway) and
+    // restore "running" when it comes back. A real crash kills the foreground
+    // process with no onStop — the state stays "running" and the dialog
+    // correctly fires.
+    override fun onStart() {
+        super.onStart()
+        if (connection != null) EngineOutcome.markRunning(this)
+    }
+
+    override fun onStop() {
+        EngineOutcome.markAbortedByUser(this)
+        super.onStop()
+    }
+
     override fun onDestroy() {
         connection?.close()
-        // Orderly teardown (user backed out / task swiped away): don't leave
-        // the outcome at "running", which the menu would misreport as a crash.
         EngineOutcome.markAbortedByUser(this)
         super.onDestroy()
         // A fresh :game process per match: Pascal globals never leak between
