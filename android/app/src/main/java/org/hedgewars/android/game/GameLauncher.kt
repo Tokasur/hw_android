@@ -2,8 +2,8 @@ package org.hedgewars.android.game
 
 import android.content.Context
 import android.content.Intent
-import android.util.DisplayMetrics
 import android.util.Log
+import android.view.WindowManager
 import org.hedgewars.android.config.ConfigSerializer
 import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.MissionConfig
@@ -42,9 +42,22 @@ class GameLauncher(private val context: Context) {
         paths.ensureUserDirs()
         BindsWriter.write(paths.settingsIni, prefs.gamepadBinds)
 
-        val metrics: DisplayMetrics = context.resources.displayMetrics
-        val physWidth = maxOf(metrics.widthPixels, metrics.heightPixels)
-        val physHeight = minOf(metrics.widthPixels, metrics.heightPixels)
+        // Real display size (not the inset-clipped app area): the game runs
+        // fullscreen immersive, and the engine paints exactly --width/--height
+        // pixels — computing from the menu's inset metrics leaves an undrawn
+        // band where the status/navigation bars used to be.
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val (rawW, rawH) = if (android.os.Build.VERSION.SDK_INT >= 30) {
+            val b = wm.currentWindowMetrics.bounds
+            b.width() to b.height()
+        } else {
+            val p = android.graphics.Point()
+            @Suppress("DEPRECATION")
+            wm.defaultDisplay.getRealSize(p)
+            p.x to p.y
+        }
+        val physWidth = maxOf(rawW, rawH)
+        val physHeight = minOf(rawW, rawH)
 
         // The engine's touch UI is sized in raw pixels (100x100 arrows...);
         // at phone densities that is ~6 mm — unusable. Render at a reduced
