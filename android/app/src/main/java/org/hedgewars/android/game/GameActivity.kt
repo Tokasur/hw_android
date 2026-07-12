@@ -56,44 +56,44 @@ class GameActivity : SDLActivity() {
     }
 
     override fun createSDLSurface(context: Context): SDLSurface =
-        ScaledSDLSurface(context, intent.getFloatExtra(EXTRA_UI_SCALE, 1f).coerceIn(1f, 4f))
+        ScaledSDLSurface(
+            context,
+            intent.getIntExtra(EXTRA_RENDER_W, 0),
+            intent.getIntExtra(EXTRA_RENDER_H, 0),
+        )
 
     /**
      * SDL surface with a reduced fixed-size buffer that Android upscales to
      * the full view. The engine's touch buttons and HUD are sized in raw
-     * pixels, so rendering at view-size / [scale] makes them [scale]x bigger
-     * physically (and cuts the pixels to render by scale^2).
+     * pixels, so rendering fewer pixels makes them physically bigger (and
+     * cheaper to draw).
+     *
+     * The buffer size is decided ONCE, up front, from the real display size
+     * (GameLauncher computes it; the engine gets the same numbers as --width/
+     * --height). It is applied before the surface is first created and never
+     * changed again: v0.2.1 recomputed it from the evolving view size (inset
+     * layout first, immersive fullscreen a moment later), and that mid-flight
+     * buffer swap raced the engine's EGL/gl4es init — fine on the slow
+     * emulator, black screen on a real phone.
      */
-    private class ScaledSDLSurface(context: Context, private val scale: Float) :
+    private class ScaledSDLSurface(context: Context, bufW: Int, bufH: Int) :
         SDLSurface(context) {
 
-        private var appliedW = 0
-        private var appliedH = 0
+        init {
+            if (bufW >= 2 && bufH >= 2) {
+                Log.i(TAG, "fixed render buffer ${bufW}x$bufH")
+                holder.setFixedSize(bufW, bufH)
+            }
+        }
 
         // Always fill the window. Without this the view can re-measure to the
         // fixed-size buffer's dimensions (observed: view collapsed to the
-        // previous buffer size, the game shrinking to a quarter of the screen
-        // in the corner), which would then feed back into onSizeChanged and
-        // halve the buffer again on every pass.
+        // buffer size, the game shrinking to a quarter of the screen).
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             setMeasuredDimension(
                 MeasureSpec.getSize(widthMeasureSpec),
                 MeasureSpec.getSize(heightMeasureSpec),
             )
-        }
-
-        override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-            super.onSizeChanged(w, h, oldw, oldh)
-            if (w > 0 && h > 0 && scale > 1.001f) {
-                val rw = ((w / scale).toInt() / 2) * 2
-                val rh = ((h / scale).toInt() / 2) * 2
-                if (rw >= 2 && rh >= 2 && (rw != appliedW || rh != appliedH)) {
-                    appliedW = rw
-                    appliedH = rh
-                    Log.i(TAG, "render buffer ${rw}x$rh for view ${w}x$h (scale $scale)")
-                    holder.setFixedSize(rw, rh)
-                }
-            }
         }
 
         override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
@@ -161,6 +161,9 @@ class GameActivity : SDLActivity() {
 
     override fun onDestroy() {
         connection?.close()
+        // Orderly teardown (user backed out / task swiped away): don't leave
+        // the outcome at "running", which the menu would misreport as a crash.
+        EngineOutcome.markAbortedByUser(this)
         super.onDestroy()
         // A fresh :game process per match: Pascal globals never leak between
         // games, and the next launch reloads everything cleanly.
@@ -171,7 +174,8 @@ class GameActivity : SDLActivity() {
         private const val TAG = "HWGameActivity"
         const val EXTRA_ENGINE_ARGS = "org.hedgewars.android.ENGINE_ARGS"
         const val EXTRA_CONFIG = "org.hedgewars.android.CONFIG"
-        const val EXTRA_UI_SCALE = "org.hedgewars.android.UI_SCALE"
+        const val EXTRA_RENDER_W = "org.hedgewars.android.RENDER_W"
+        const val EXTRA_RENDER_H = "org.hedgewars.android.RENDER_H"
         const val EXTRA_CAMPAIGN_TEAM = "org.hedgewars.android.CAMPAIGN_TEAM"
         const val EXTRA_CAMPAIGN_SCOPE = "org.hedgewars.android.CAMPAIGN_SCOPE"
 
@@ -179,14 +183,17 @@ class GameActivity : SDLActivity() {
             context: Context,
             engineArgs: List<String>,
             config: List<String>,
-            uiScale: Float = 1f,
+            /** Fixed render-buffer size; 0x0 renders at native resolution. */
+            renderW: Int = 0,
+            renderH: Int = 0,
             campaignTeam: String? = null,
             campaignScope: String? = null,
         ): Intent =
             Intent(context, GameActivity::class.java)
                 .putExtra(EXTRA_ENGINE_ARGS, engineArgs.toTypedArray())
                 .putExtra(EXTRA_CONFIG, config.toTypedArray())
-                .putExtra(EXTRA_UI_SCALE, uiScale)
+                .putExtra(EXTRA_RENDER_W, renderW)
+                .putExtra(EXTRA_RENDER_H, renderH)
                 .putExtra(EXTRA_CAMPAIGN_TEAM, campaignTeam)
                 .putExtra(EXTRA_CAMPAIGN_SCOPE, campaignScope)
     }

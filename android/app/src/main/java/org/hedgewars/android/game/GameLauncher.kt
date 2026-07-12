@@ -84,9 +84,16 @@ class GameLauncher(private val context: Context) {
             lowQuality = prefs.lowQuality,
         )
         Log.i(TAG, "launching game at ${width}x$height (ui scale $scale) with ${config.size} config commands")
+        // The same numbers become the surface's fixed buffer size, decided
+        // here once and never changed mid-game (scale 1 = native, no fixing).
+        val renderW = if (scale > 1.001f) width else 0
+        val renderH = if (scale > 1.001f) height else 0
         context.startActivity(
-            GameActivity.intent(context, args.toList(), config, scale, campaignTeam, campaignScope)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            GameActivity.intent(
+                context, args.toList(), config,
+                renderW = renderW, renderH = renderH,
+                campaignTeam = campaignTeam, campaignScope = campaignScope,
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
 

@@ -25,6 +25,19 @@ object EngineOutcome {
     fun markFinished(context: Context) = write(context, STATE_OK, null)
     fun markError(context: Context, message: String?) = write(context, STATE_ERROR, message)
 
+    /**
+     * The game activity is being destroyed in an orderly way (user backed out,
+     * swiped the task away, system reclaimed it). If nothing more specific was
+     * recorded, downgrade "running" to "ok" so the menu does not show a scary
+     * "engine stopped unexpectedly" dialog for a manual quit. A recorded error
+     * is kept as-is.
+     */
+    fun markAbortedByUser(context: Context) {
+        val state = runCatching { file(context).readText() }.getOrNull()
+            ?.split('\n', limit = 2)?.firstOrNull()
+        if (state == STATE_RUNNING) write(context, STATE_OK, null)
+    }
+
     private fun write(context: Context, state: String, message: String?) {
         runCatching {
             file(context).writeText(state + (message?.let { "\n$it" } ?: ""))
