@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Matrix
+import android.opengl.EGL14
 import android.os.Bundle
 import android.os.Process
 import android.util.Log
@@ -97,6 +98,21 @@ class GameActivity : SDLActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Pre-initialize EGL on this thread BEFORE SDL dlopens libgl4es.so.
+        // gl4es's ELF constructor calls eglGetDisplay(); running that inside
+        // dlopen can deadlock — the dlopen holds the linker lock while EGL's
+        // first-time init wants to dlopen the vendor driver, and the render
+        // thread doing its own EGL init holds the EGL lock while waiting on
+        // the linker (classic AB-BA; observed as a forever-frozen onCreate,
+        // the engine never starting and the game window never composing).
+        // With EGL already initialized, the constructor takes the fast path
+        // and never re-enters the linker.
+        val display = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
+        if (display != EGL14.EGL_NO_DISPLAY) {
+            val version = IntArray(2)
+            EGL14.eglInitialize(display, version, 0, version, 1)
+        }
+
         // Deliver the back button to the engine as the "ac_back" key (bound
         // to the quit-confirmation) instead of finishing the activity.
         android.system.Os.setenv("SDL_ANDROID_TRAP_BACK_BUTTON", "1", true)
