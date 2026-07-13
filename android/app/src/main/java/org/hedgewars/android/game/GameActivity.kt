@@ -146,8 +146,16 @@ class GameActivity : SDLActivity() {
         val conn = GameConnection(
             configCommands = { config },
             listener = object : GameConnection.Listener {
-                override fun onEngineError(message: String) = EngineOutcome.markError(this@GameActivity, message)
-                override fun onGameFinished(interrupted: Boolean) = EngineOutcome.markFinished(this@GameActivity)
+                override fun onEngineError(message: String) {
+                    EngineOutcome.markError(this@GameActivity, message)
+                    runOnUiThread { if (!isFinishing) finishAndRemoveTask() }
+                }
+                override fun onGameFinished(interrupted: Boolean) {
+                    EngineOutcome.markFinished(this@GameActivity)
+                    // Deterministic return to the menu at match end instead of
+                    // relying on SDL's own teardown ordering.
+                    runOnUiThread { if (!isFinishing) finishAndRemoveTask() }
+                }
             },
             varStore = varStore,
         )
@@ -173,7 +181,26 @@ class GameActivity : SDLActivity() {
 
     override fun onStop() {
         EngineOutcome.markAbortedByUser(this)
+        // Leaving the game screen ends the match. Suspending the engine in the
+        // background and resuming it later means tearing down and rebuilding
+        // the whole GL state through gl4es — the path that reliably died on a
+        // real phone ("IPC connection lost" after the fullscr reinit) and left
+        // a zombie :game process that broke every following match (singleTask
+        // re-entered the stale instance instead of starting a new engine).
+        // Ending the match on the way out keeps every match hermetic: one
+        // Fight! = one fresh process. The screen cannot turn off mid-game
+        // (FLAG_KEEP_SCREEN_ON), so this only triggers on a deliberate exit.
+        if (!isFinishing) finishAndRemoveTask()
         super.onStop()
+    }
+
+    // Safety net: if a new match Intent ever reaches a still-live instance
+    // (singleTask), don't try to reuse the running engine — shut down; the
+    // menu stays visible and the next Fight! gets a clean process.
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        Log.w(TAG, "new match intent hit a live game instance; shutting it down")
+        if (!isFinishing) finishAndRemoveTask()
     }
 
     override fun onDestroy() {

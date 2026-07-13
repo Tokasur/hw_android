@@ -110,15 +110,15 @@ class GameLauncher(private val context: Context) {
         /**
          * Resolve the render-scale factor for the in-game UI.
          *
-         * "auto" targets an effective landscape height of ~560 px — the class
-         * of screen (800x480…1280x720) the engine's fixed-pixel touch UI was
-         * designed for — in quarter steps: a 1080 px-tall phone gets x2
-         * (buttons ~12 mm instead of ~6 mm), a 720 px screen ~x1.25, anything
-         * at or below 560 px stays at x1.
+         * "auto" targets an effective landscape height of ~480 px — the WVGA
+         * class of screen the engine's fixed-pixel touch UI was designed for —
+         * in quarter steps: a 1080 px-tall phone gets x2.25 (buttons ~14 mm;
+         * x2 was reported still a bit small), a 720 px screen x1.5, anything
+         * at or below 480 px stays at x1.
          */
         fun uiScale(landscapeHeightPx: Int, pref: String): Float {
             pref.toFloatOrNull()?.let { return it.coerceIn(1f, 3f) }
-            val quarters = Math.round(landscapeHeightPx / 560f * 4f)
+            val quarters = Math.round(landscapeHeightPx / 480f * 4f)
             return (quarters / 4f).coerceIn(1f, 3f)
         }
     }

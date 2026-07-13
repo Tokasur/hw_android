@@ -85,6 +85,7 @@ var
 
     buttonsDown: Longword;
     targetting, targetted: boolean; //true when targetting an airstrike or the like
+    lastPauseToggle: LongWord; //RealTicks of the last accepted pause toggle
 
 procedure onTouchDown(x, y: Single; pointerId: TSDL_FingerId);
 var
@@ -146,7 +147,15 @@ if isOnWidget(arrowDown, finger^) then
 
 if isOnWidget(pauseButton, finger^) then
     begin
-    ParseTeamCommand('pause');
+    // Debounce: a single physical tap can be delivered as two touch events
+    // in quick succession (observed on a Pixel 9 — every press logged two
+    // 'pause' commands, pausing and instantly unpausing), so accept at most
+    // one toggle per 300 ms.
+    if (lastPauseToggle = 0) or (RealTicks - lastPauseToggle > 300) then
+        begin
+        lastPauseToggle:= RealTicks;
+        ParseTeamCommand('pause');
+        end;
     moveCursor:= false;
     finger^.pressedWidget:= @pauseButton;
     exit;
