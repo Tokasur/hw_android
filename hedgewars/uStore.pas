@@ -1458,8 +1458,11 @@ begin
             end;
 
     TTF_Quit();
-    SDL_GL_DeleteContext(SDLGLcontext);
-    SDL_DestroyWindow(SDLwindow);
-    SDL_Quit();
+    // The GL context, window and SDL itself are owned by hwengine's
+    // freeEverything, which destroys them exactly once after every module
+    // (including uTextures) has released its GL objects. Destroying them
+    // here as well double-freed the same never-nil'd handles and tore the
+    // context down before uTextures/GLUnit ran their cleanup — harmless on
+    // desktop drivers, a hard SIGSEGV through gl4es on Android.
 end;
 end.

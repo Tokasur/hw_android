@@ -99,6 +99,16 @@ finger:= addFinger(xr, yr, pointerId);
 
 inc(buttonsDown);//inc buttonsDown, if we don't see a button down we'll dec it
 
+// Quit-confirmation overlay: 'confirm' is only bound to the 'y' key, which
+// touch-only devices don't have — pressing back again would CANCEL (chQuit
+// toggles the overlay). Any tap while the overlay is up confirms the quit.
+if GameState = gsConfirm then
+    begin
+    ParseCommand('confirm', true);
+    moveCursor:= false;
+    exit;
+    end;
+
 if isOnCrosshair(finger^) then
 begin
     aimingCrosshair:= true;

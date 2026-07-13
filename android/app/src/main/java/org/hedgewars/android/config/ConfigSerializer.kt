@@ -81,6 +81,11 @@ object ConfigSerializer {
     fun missionGame(cfg: MissionConfig): List<String> {
         val cmds = mutableListOf("TL")
         cmds += missionTeamCommands(cfg.team)
+        // Defensive default: the engine requires a theme before it can start
+        // (cifTheme init flag) and normally the mission's Lua script sets one
+        // in onGameInit — but if the script fails to, the engine dies with
+        // "Some parameters not set". A script-provided theme still wins.
+        cmds += "etheme Nature"
         cmds += "eseed ${GameConfig.newSeed()}"
         cmds += "escript ${cfg.script}"
         return cmds

@@ -77,7 +77,11 @@ class GameConnection(
                         output.write(EngineProtocol.encodeAll(cfg))
                         output.flush()
                     }
-                    'E' -> listener.onEngineError(trimmedText(msg))
+                    // An error after the game already reported its end (q/Q)
+                    // is teardown noise, not a match failure — the outcome
+                    // must stay "ok" so the menu doesn't show a crash dialog.
+                    'E' -> if (!finished && !interrupted) listener.onEngineError(trimmedText(msg))
+                        else Log.w(TAG, "post-quit engine error ignored: ${trimmedText(msg)}")
                     'i' -> if (msg.size >= 2) {
                         listener.onStats(msg[1].toInt().toChar(), String(msg, 2, msg.size - 2, Charsets.UTF_8))
                     }
