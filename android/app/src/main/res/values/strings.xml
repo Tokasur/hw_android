@@ -86,4 +86,6 @@
     <string name="controls_title">Controls</string>
     <string name="controls_touch">Touch: drag to scroll, pinch to zoom. Use the on-screen arrows to walk, the aim widget to aim, the fire button to shoot (hold for more power). Tap your hedgehog or the corner button to open the weapon menu. Tap a target for air strikes.</string>
     <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, A jump, B backflip, X fire, Y weapon menu, Start pause.</string>
+    <!-- Engine crash handling -->
+    <string name="engine_crash_retry">The game crashed at start — retrying…</string>
 </resources>

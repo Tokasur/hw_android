@@ -114,6 +114,50 @@ class GameActivity : SDLActivity() {
         }
     }
 
+    /**
+     * The exact decor state SDL would apply for a fullscreen window
+     * (SDLActivity's COMMAND_CHANGE_WINDOW_STYLE handler), applied by US,
+     * once, BEFORE the surface exists. SDL's own style commands are swallowed
+     * in [sendCommand]: SDLActivity.onCreate first forces a WINDOWED style
+     * and the engine requests fullscreen only after it has already started,
+     * so the decor flipped windowed->immersive underneath a running engine —
+     * the layout change destroyed/recreated the game surface in the middle
+     * of EGL/gl4es init. On the slow emulator init always lost that race
+     * harmlessly; on a fast phone (Pixel 9) it randomly crashed the process
+     * at match start. One owner, one decor state, zero mid-init resizes.
+     */
+    private fun applyImmersiveDecor() {
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = (
+            android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            )
+        @Suppress("DEPRECATION")
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        @Suppress("DEPRECATION")
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN)
+    }
+
+    // COMMAND_CHANGE_WINDOW_STYLE == 2 (package-private in SDLActivity).
+    // Both SDL window-style requests — the windowed one from
+    // SDLActivity.onCreate and the fullscreen one the engine triggers after
+    // startup — are no-ops: the decor is already in its final state.
+    override fun sendCommand(command: Int, data: Any?): Boolean {
+        if (command == 2) return true
+        return super.sendCommand(command, data)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        // IMMERSIVE_STICKY re-hides on its own; re-assert on focus regain as
+        // we bypassed SDL's own rehide bookkeeping.
+        if (hasFocus) applyImmersiveDecor()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Pre-initialize EGL on this thread BEFORE SDL dlopens libgl4es.so.
         // gl4es's ELF constructor calls eglGetDisplay(); running that inside
@@ -129,6 +173,11 @@ class GameActivity : SDLActivity() {
             val version = IntArray(2)
             EGL14.eglInitialize(display, version, 0, version, 1)
         }
+
+        // Final fullscreen decor BEFORE the surface is created, so the first
+        // surface is born at its final size (see applyImmersiveDecor).
+        applyImmersiveDecor()
+        mFullscreenModeActive = true
 
         // Deliver the back button to the engine as the "ac_back" key (bound
         // to the quit-confirmation) instead of finishing the activity.

@@ -44,17 +44,27 @@ object EngineOutcome {
         }
     }
 
-    /** Returns an error message to show once, or null. Clears the state. */
-    fun consumeError(context: Context): String? {
+    /**
+     * How the last run failed: [hardCrash] is a process death that never got
+     * to report anything (state still "running" — native crash or kill),
+     * as opposed to an error the engine itself reported over IPC.
+     */
+    data class EngineFailure(val message: String, val hardCrash: Boolean)
+
+    /** Returns the failure to show once, or null. Clears the state. */
+    fun consumeError(context: Context): EngineFailure? {
         val f = file(context)
         val content = runCatching { f.readText() }.getOrNull() ?: return null
         val lines = content.split('\n', limit = 2)
         val state = lines.firstOrNull()
         runCatching { f.writeText(STATE_OK) }
         return when (state) {
-            STATE_ERROR -> lines.getOrNull(1)?.takeIf { it.isNotBlank() }
-                ?: "The game engine reported an error."
-            STATE_RUNNING -> "The game engine stopped unexpectedly."
+            STATE_ERROR -> EngineFailure(
+                lines.getOrNull(1)?.takeIf { it.isNotBlank() }
+                    ?: "The game engine reported an error.",
+                hardCrash = false,
+            )
+            STATE_RUNNING -> EngineFailure("The game engine stopped unexpectedly.", hardCrash = true)
             else -> null
         }
     }

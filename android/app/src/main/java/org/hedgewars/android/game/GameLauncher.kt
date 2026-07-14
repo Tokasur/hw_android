@@ -88,13 +88,14 @@ class GameLauncher(private val context: Context) {
         // here once and never changed mid-game (scale 1 = native, no fixing).
         val renderW = if (scale > 1.001f) width else 0
         val renderH = if (scale > 1.001f) height else 0
-        context.startActivity(
-            GameActivity.intent(
-                context, args.toList(), config,
-                renderW = renderW, renderH = renderH,
-                campaignTeam = campaignTeam, campaignScope = campaignScope,
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
+        val intent = GameActivity.intent(
+            context, args.toList(), config,
+            renderW = renderW, renderH = renderH,
+            campaignTeam = campaignTeam, campaignScope = campaignScope,
+        ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // Remembered so a crash-at-start can be relaunched automatically.
+        LastLaunch.record(intent)
+        context.startActivity(intent)
     }
 
     /** Engine locale file matching the app language, if shipped. */

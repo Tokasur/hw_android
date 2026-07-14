@@ -1,6 +1,7 @@
 package org.hedgewars.android
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -15,6 +16,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.hedgewars.android.engine.EngineOutcome
+import org.hedgewars.android.engine.GameProcessExitInfo
+import org.hedgewars.android.game.LastLaunch
 import org.hedgewars.android.ui.error.EngineErrorDialog
 import org.hedgewars.android.ui.about.AboutScreen
 import org.hedgewars.android.ui.about.ControlsScreen
@@ -48,14 +51,32 @@ private fun AppNavigation() {
     val nav = rememberNavController()
 
     // When we come back from a game, surface any engine error / native crash.
+    // A hard crash right after launch gets up to two silent automatic
+    // relaunches first (a rare timing-dependent native crash at engine start
+    // on fast devices succeeds on retry); if the budget is spent, the dialog
+    // shows — enriched with the system's exit record and native tombstone.
     val context = LocalContext.current
     var engineError by remember { mutableStateOf<String?>(null) }
+    var crashReport by remember { mutableStateOf<String?>(null) }
     LifecycleResumeEffect(Unit) {
-        engineError = EngineOutcome.consumeError(context)
+        EngineOutcome.consumeError(context)?.let { failure ->
+            val retry = if (failure.hardCrash) LastLaunch.takeRetry() else null
+            if (retry != null) {
+                Toast.makeText(context, R.string.engine_crash_retry, Toast.LENGTH_SHORT).show()
+                context.startActivity(retry)
+            } else {
+                crashReport = GameProcessExitInfo.report(context)
+                engineError = failure.message
+            }
+        }
         onPauseOrDispose { }
     }
     engineError?.let { msg ->
-        EngineErrorDialog(message = msg, onDismiss = { engineError = null })
+        EngineErrorDialog(
+            message = msg,
+            extraReport = crashReport,
+            onDismiss = { engineError = null; crashReport = null },
+        )
     }
 
     // One night-sky backdrop for the whole app; every screen renders on it.

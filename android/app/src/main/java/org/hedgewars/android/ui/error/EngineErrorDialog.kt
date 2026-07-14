@@ -30,10 +30,20 @@ import org.hedgewars.android.engine.EngineOutcome
  * closed" report becomes actionable.
  */
 @Composable
-fun EngineErrorDialog(message: String, onDismiss: () -> Unit) {
+fun EngineErrorDialog(
+    message: String,
+    /** System exit record / native tombstone, prepended to the shared log. */
+    extraReport: String? = null,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
     var showLog by remember { mutableStateOf(false) }
-    val log = remember { EngineOutcome.readEngineLog(context) }
+    val log = remember {
+        val engineLog = EngineOutcome.readEngineLog(context)
+        listOfNotNull(extraReport, engineLog)
+            .joinToString("\n\n")
+            .ifBlank { null }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
