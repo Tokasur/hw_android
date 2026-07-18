@@ -59,14 +59,23 @@ private fun AppNavigation() {
     var engineError by remember { mutableStateOf<String?>(null) }
     var crashReport by remember { mutableStateOf<String?>(null) }
     LifecycleResumeEffect(Unit) {
-        EngineOutcome.consumeError(context)?.let { failure ->
-            val retry = if (failure.hardCrash) LastLaunch.takeRetry() else null
-            if (retry != null) {
+        val failure = EngineOutcome.consumeError(context)
+        val retry = if (failure != null && failure.hardCrash) LastLaunch.takeRetry() else null
+        when {
+            retry != null -> {
                 Toast.makeText(context, R.string.engine_crash_retry, Toast.LENGTH_SHORT).show()
                 context.startActivity(retry)
-            } else {
+            }
+            failure != null -> {
                 crashReport = GameProcessExitInfo.report(context)
                 engineError = failure.message
+                // The dialog is the end of the line for this launch — never
+                // fire a surprise relaunch on some later resume.
+                LastLaunch.clear()
+            }
+            else -> {
+                // Menu settled cleanly (no failure): nothing may relaunch.
+                LastLaunch.clear()
             }
         }
         onPauseOrDispose { }

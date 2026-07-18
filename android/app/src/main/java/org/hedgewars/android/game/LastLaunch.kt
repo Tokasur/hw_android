@@ -11,8 +11,15 @@ import android.os.SystemClock
  * ("Some parameters not set", ...) would just fail again.
  */
 object LastLaunch {
-    /** Auto-retry only crashes that happen soon after launch, not mid-game. */
-    private const val RETRY_WINDOW_MS = 180_000L
+    /**
+     * Auto-retry only crashes that happen right after launch: a launch
+     * crash bounces back to the menu within seconds, so a small window is
+     * enough. Anything later is a mid-game crash or the user coming back to
+     * the app long after the fact — relaunching the old match then is
+     * disorienting, never helpful (v0.2.5 used 3 min and users got thrown
+     * back into matches they had already given up on).
+     */
+    private const val RETRY_WINDOW_MS = 45_000L
     private const val MAX_RETRIES = 2
 
     @Volatile private var intent: Intent? = null
@@ -37,5 +44,15 @@ object LastLaunch {
         retries++
         launchedAt = SystemClock.elapsedRealtime()
         return i
+    }
+
+    /**
+     * Forget the last launch. Called whenever the menu settles — a clean
+     * return from a match, or an error dialog already shown — so no stale
+     * intent can ever fire a surprise relaunch later.
+     */
+    fun clear() {
+        intent = null
+        retries = 0
     }
 }

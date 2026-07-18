@@ -34,6 +34,16 @@ class GameActivity : SDLActivity() {
 
     private var connection: GameConnection? = null
 
+    /**
+     * Set when the system re-created this activity after a process death
+     * (crash): the task record survives a crash un-finished, and bringing
+     * the app back to the front makes Android rebuild the activity with the
+     * ORIGINAL match Intent — the dead match would silently restart. Such a
+     * ghost is closed immediately and must not touch EngineOutcome (it
+     * would overwrite the crash state the menu is about to report).
+     */
+    private var ghostRecreation = false
+
     override fun getLibraries(): Array<String> = EngineLoader.libraries + "main"
 
     override fun getArguments(): Array<String> {
@@ -159,6 +169,19 @@ class GameActivity : SDLActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // A saved state means the system is resurrecting a match whose
+        // process died — a legitimate launch from GameLauncher always starts
+        // fresh (null). Close the ghost before any engine/IPC setup; the
+        // engine never starts (the activity finishes before SDL sees a
+        // ready surface with focus).
+        if (savedInstanceState != null) {
+            ghostRecreation = true
+            Log.w(TAG, "re-created after process death; closing instead of restarting the old match")
+            super.onCreate(savedInstanceState)
+            finishAndRemoveTask()
+            return
+        }
+
         // Pre-initialize EGL on this thread BEFORE SDL dlopens libgl4es.so.
         // gl4es's ELF constructor calls eglGetDisplay(); running that inside
         // dlopen can deadlock — the dlopen holds the linker lock while EGL's
@@ -229,7 +252,7 @@ class GameActivity : SDLActivity() {
     }
 
     override fun onStop() {
-        EngineOutcome.markAbortedByUser(this)
+        if (!ghostRecreation) EngineOutcome.markAbortedByUser(this)
         // Leaving the game screen ends the match. Suspending the engine in the
         // background and resuming it later means tearing down and rebuilding
         // the whole GL state through gl4es — the path that reliably died on a
@@ -254,7 +277,7 @@ class GameActivity : SDLActivity() {
 
     override fun onDestroy() {
         connection?.close()
-        EngineOutcome.markAbortedByUser(this)
+        if (!ghostRecreation) EngineOutcome.markAbortedByUser(this)
         super.onDestroy()
         // A fresh :game process per match: Pascal globals never leak between
         // games, and the next launch reloads everything cleanly.
