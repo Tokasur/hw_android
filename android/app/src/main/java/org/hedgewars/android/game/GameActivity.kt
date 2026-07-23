@@ -219,6 +219,13 @@ class GameActivity : SDLActivity() {
             configCommands = { config },
             listener = object : GameConnection.Listener {
                 override fun onEngineError(message: String) {
+                    // A quit in progress tears the IPC down under the engine;
+                    // its dying "IPC connection lost" is expected collateral
+                    // of leaving, not a match failure to report.
+                    if (isFinishing) {
+                        Log.w(TAG, "engine error ignored during teardown: $message")
+                        return
+                    }
                     EngineOutcome.markError(this@GameActivity, message)
                     runOnUiThread { if (!isFinishing) finishAndRemoveTask() }
                 }

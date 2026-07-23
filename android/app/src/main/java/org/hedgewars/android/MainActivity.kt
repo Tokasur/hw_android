@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import org.hedgewars.android.engine.EngineOutcome
 import org.hedgewars.android.engine.GameProcessExitInfo
+import org.hedgewars.android.game.GameLauncher
 import org.hedgewars.android.game.LastLaunch
 import org.hedgewars.android.ui.error.EngineErrorDialog
 import org.hedgewars.android.ui.about.AboutScreen
@@ -64,6 +65,10 @@ private fun AppNavigation() {
         when {
             retry != null -> {
                 Toast.makeText(context, R.string.engine_crash_retry, Toast.LENGTH_SHORT).show()
+                // The crashed engine's process usually lingers (no onDestroy
+                // after a crash); relaunching into it is exactly what made
+                // retries fail with "Android only supports one window".
+                GameLauncher.ensureFreshGameProcess(context)
                 context.startActivity(retry)
             }
             failure != null -> {

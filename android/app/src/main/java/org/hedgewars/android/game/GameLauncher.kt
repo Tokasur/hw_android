@@ -1,7 +1,9 @@
 package org.hedgewars.android.game
 
+import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import android.util.Log
 import android.view.WindowManager
 import org.hedgewars.android.config.ConfigSerializer
@@ -39,6 +41,7 @@ class GameLauncher(private val context: Context) {
         campaignTeam: String? = null,
         campaignScope: String? = null,
     ) {
+        ensureFreshGameProcess(context)
         paths.ensureUserDirs()
         BindsWriter.write(paths.settingsIni, prefs.gamepadBinds)
 
@@ -107,6 +110,31 @@ class GameLauncher(private val context: Context) {
 
     companion object {
         private const val TAG = "HWGameLauncher"
+
+        /**
+         * The ":game" process must be truly fresh before a match starts: SDL
+         * keeps process-global window state, and launching into a process
+         * where the previous SDL window is still tearing down makes
+         * SDL_CreateWindow fail ("Android only supports one window") and
+         * takes the engine down with it — the historical random crash at
+         * match start on fast devices. A crashed engine usually leaves its
+         * process lingering (onDestroy never ran), so kill any leftover
+         * (same-uid kill is permitted) and wait until the record is gone.
+         */
+        fun ensureFreshGameProcess(context: Context) {
+            val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            fun stale() = am.runningAppProcesses.orEmpty().filter { it.processName.endsWith(":game") }
+            val found = stale()
+            if (found.isEmpty()) return
+            found.forEach {
+                Log.w(TAG, "killing stale :game process pid=${it.pid}")
+                android.os.Process.killProcess(it.pid)
+            }
+            val deadline = SystemClock.elapsedRealtime() + 1_000
+            while (stale().isNotEmpty() && SystemClock.elapsedRealtime() < deadline) {
+                SystemClock.sleep(50)
+            }
+        }
 
         /**
          * Resolve the render-scale factor for the in-game UI.

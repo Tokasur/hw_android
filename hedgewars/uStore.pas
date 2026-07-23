@@ -1283,6 +1283,20 @@ begin
         end
     else
         begin
+{$IFDEF ANDROID}
+        // Android runs a single borderless fullscreen window whose buffer
+        // size is fixed by the frontend for the whole match. Any 'fullscr'
+        // arriving after the window exists is noise from system window
+        // animations — most notably the predictive-back gesture resizing the
+        // dying window on the way out, which used to trigger a full GL and
+        // texture rebuild through gl4es mid-teardown and kill the engine
+        // (IPC connection lost in the middle of StoreLoad). Screen sizes were
+        // already restored above; nothing else may change. Suspend/resume
+        // never reaches here: leaving the screen ends the match by design
+        // (GameActivity.onStop).
+        AddFileLog('fullscr ignored: Android window already up');
+        exit;
+{$ENDIF}
         AmmoMenuInvalidated:= true;
 {$IFDEF IPHONEOS}
         // chFullScr is called when there is a rotation event and needs the SetScale and SetupOpenGL to set up the new resolution
