@@ -62,4 +62,12 @@ GLUE_DST="$ANDROID_DIR/app/src/main/java/org/libsdl/app"
 mkdir -p "$GLUE_DST"
 cp "$GLUE_SRC"/*.java "$GLUE_DST/"
 echo "== SDL Java glue copied to $GLUE_DST"
+# The repo carries deliberate patches on top of upstream glue (e.g. SDLActivity.
+# sendCommand made protected for GameActivity). Refreshing is legitimate on an
+# SDL version bump, but never let it silently clobber those patches.
+if ! git -C "$ANDROID_DIR" diff --quiet -- "$GLUE_DST" 2>/dev/null; then
+    echo "== WARNING: copied glue differs from the committed version (local patches overwritten)."
+    echo "==          Review:  git diff -- $GLUE_DST"
+    echo "==          Restore: git checkout -- $GLUE_DST"
+fi
 echo "== Done"
