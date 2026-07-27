@@ -84,5 +84,5 @@
     <!-- Aide contrôles -->
     <string name="controls_title">Contrôles</string>
     <string name="controls_touch">Tactile : faites glisser pour déplacer la caméra, pincez pour zoomer. Utilisez les flèches à l\'écran pour marcher, le viseur pour ajuster l\'angle, le bouton de tir pour tirer (maintenez pour plus de puissance). Touchez votre hérisson ou le bouton dédié pour ouvrir le menu des armes. Touchez une cible pour les frappes aériennes.</string>
-    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, stick droit pour la caméra, A saut, B salto arrière, X tir, Y menu des armes, Start pause. Dans le menu des armes, la croix parcourt et X valide. R1/R2 font défiler le délai des grenades (1-5 s) ; en maintenant L1 en même temps, c\'est le rebond qui défile. L1 seul = visée précise.</string>
+    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, stick droit pour la caméra, A saut, B salto arrière, X tir, Y menu des armes, Start pause. Dans le menu des armes, la croix parcourt, A ou X valide, B ou Y ferme. R1/R2 font défiler le délai des grenades (1-5 s) ; en maintenant L1 en même temps, c\'est le rebond qui défile. L1 seul = visée précise.</string>
 </resources>

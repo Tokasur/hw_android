@@ -193,35 +193,53 @@ for i:= 0 to ModifierCount do
     end;
 end;
 
-// Binds the open ammo menu takes over: walking the hedgehog and firing make
-// no sense while picking a weapon, and every one of them used to slam the
-// menu shut (they are missing from the allow-list further down in ProcessKey),
-// which made weapon selection impossible with a gamepad or keyboard.
-function isAmmoMenuBind(var curBind: shortstring): boolean;
+// While the ammo menu is up the controller drives the MENU, not the hedgehog.
+// Every in-game bind used to slam the menu shut (they are missing from the
+// allow-list further down in ProcessKey) AND fire its action, so picking a
+// weapon with a gamepad was impossible: a direction walked the hog, jump
+// jumped, and the menu vanished either way.
+type TAmmoMenuAction = (
+    amaPass,     // not ours: normal handling (ammomenu toggle, pause, quit...)
+    amaLeft, amaRight, amaUp, amaDown,
+    amaConfirm,  // equip what the cursor is on
+    amaClose,    // back out without equipping
+    amaIgnore);  // in-game action, meaningless while browsing: eat it
+
+function ammoMenuAction(var curBind: shortstring): TAmmoMenuAction;
 begin
-isAmmoMenuBind:= (curBind = '+left') or (curBind = '+right')
-              or (curBind = '+up') or (curBind = '+down')
-              or (curBind = '+attack')
+if curBind = '+left' then ammoMenuAction:= amaLeft
+else if curBind = '+right' then ammoMenuAction:= amaRight
+else if curBind = '+up' then ammoMenuAction:= amaUp
+else if curBind = '+down' then ammoMenuAction:= amaDown
+// Both the fire button and jump confirm: on a gamepad the bottom face button
+// is what everyone presses to validate, and it is bound to a jump in-game.
+else if (curBind = '+attack') or (curBind = 'hjump') then ammoMenuAction:= amaConfirm
+else if curBind = 'ljump' then ammoMenuAction:= amaClose
+// Precise aim, fuse cycling and hedgehog switching all apply to the weapon
+// you are ALREADY holding; firing them from inside the menu is surprising
+// (and used to close it as a side effect).
+else if (curBind = '+precise') or (curBind = 'timer_u') or (curBind = 'switch')
+    then ammoMenuAction:= amaIgnore
+else ammoMenuAction:= amaPass
 end;
 
-// Directions step the weapon cursor one menu cell; attack picks what is under
-// it. The cursor IS the selection here — the menu keeps no highlight index of
-// its own, it hit-tests CursorPoint every frame (uWorld.ShowAmmoMenu) — and
-// MoveCamera re-clamps it to the menu rect every frame, so stepping past an
-// edge simply stops at it.
+// Directions step the weapon cursor one menu cell. The cursor IS the selection
+// here — the menu keeps no highlight index of its own, it hit-tests CursorPoint
+// every frame (uWorld.ShowAmmoMenu) — and MoveCamera re-clamps it to the menu
+// rect every frame, so stepping past an edge simply stops at it.
 procedure navigateAmmoMenu(var curBind: shortstring; Trusted: boolean);
 const step = AMSlotSize + 1; // one cell, same pitch as uWorld's hit test
 begin
-if curBind = '+left' then
-    dec(CursorPoint.X, step)
-else if curBind = '+right' then
-    inc(CursorPoint.X, step)
-else if curBind = '+up' then
-    inc(CursorPoint.Y, step) // CursorPoint.Y grows towards the top of the screen
-else if curBind = '+down' then
-    dec(CursorPoint.Y, step)
-else // '+attack': same confirmation path as a mouse click or a touch tap
-    ParseCommand('put', Trusted)
+case ammoMenuAction(curBind) of
+    amaLeft:  dec(CursorPoint.X, step);
+    amaRight: inc(CursorPoint.X, step);
+    amaUp:    inc(CursorPoint.Y, step); // CursorPoint.Y grows towards the top
+    amaDown:  dec(CursorPoint.Y, step);
+    // same confirmation path as a mouse click or a touch tap on the weapon
+    amaConfirm: ParseCommand('put', Trusted);
+    amaClose:   bShowAmmoMenu:= false;
+    amaIgnore:  ; // deliberately nothing, and the menu stays up
+end
 end;
 
 procedure ProcessKey(code: LongInt; KeyDown: boolean);
@@ -280,7 +298,7 @@ if CurrentBinds.indices[code] > 0 then
         tAmmoMenuNav[code]:= bShowAmmoMenu
                              and (CurrentTeam <> nil)
                              and (not CurrentTeam^.ExtDriven)
-                             and isAmmoMenuBind(curBind);
+                             and (ammoMenuAction(curBind) <> amaPass);
     if tAmmoMenuNav[code] then
         begin
         if KeyDown then
