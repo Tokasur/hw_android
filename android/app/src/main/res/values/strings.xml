@@ -60,6 +60,7 @@
     <string name="settings_audio">Sound &amp; music</string>
     <string name="settings_sound">Sound effects</string>
     <string name="settings_music">Music</string>
+    <string name="settings_menu_music">Menu music</string>
     <string name="settings_quality">Graphics quality</string>
     <string name="settings_quality_low">Reduced quality (faster)</string>
     <string name="settings_show_fps">Show FPS</string>

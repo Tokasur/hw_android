@@ -17,6 +17,11 @@ class UserPrefs(context: Context) {
         get() = prefs.getBoolean("music", true)
         set(v) = prefs.edit { putBoolean("music", v) }
 
+    /** Main-theme music in the frontend menus (in-game music is [music]). */
+    var menuMusic: Boolean
+        get() = prefs.getBoolean("menuMusic", true)
+        set(v) = prefs.edit { putBoolean("menuMusic", v) }
+
     var showFps: Boolean
         get() = prefs.getBoolean("showFps", false)
         set(v) = prefs.edit { putBoolean("showFps", v) }

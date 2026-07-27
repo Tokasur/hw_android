@@ -58,6 +58,7 @@
     <string name="settings_audio">Son et musique</string>
     <string name="settings_sound">Effets sonores</string>
     <string name="settings_music">Musique</string>
+    <string name="settings_menu_music">Musique du menu</string>
     <string name="settings_quality">Qualité graphique</string>
     <string name="settings_quality_low">Qualité réduite (plus rapide)</string>
     <string name="settings_show_fps">Afficher les FPS</string>
