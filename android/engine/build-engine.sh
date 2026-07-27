@@ -92,22 +92,25 @@ for abi in "${ABIS[@]}"; do
         || { tail -30 "$out/link.log"; die "link failed for $abi"; }
 
     log "[$abi] verify exports + 16 KB alignment"
-    # llvm-nm occasionally returns empty output on a perfectly healthy .so
-    # (observed twice on 2026-07-23: the rebuilt library was bit-identical and
-    # passed on retry) — retry a couple of times before declaring failure.
-    exported=0
-    for _try in 1 2 3; do
-        if "$LLVM/llvm-nm" -D "$out/libhwengine.so" | grep -q " T RunEngine"; then
-            exported=1; break
-        fi
-        sleep 1
-    done
-    [ "$exported" = 1 ] || die "RunEngine not exported ($abi)"
-    "$LLVM/llvm-nm" -D "$out/libhwengine.so" \
-        | grep -q "Java_org_hedgewars_hedgeroid_EngineProtocol_PascalExports_HWGenLandPreview" \
-        || die "JNI land preview export missing ($abi)"
-    "$LLVM/llvm-readelf" -l "$out/libhwengine.so" | grep -q "0x4000$" \
-        || die "16 KB page alignment missing ($abi)"
+    # The llvm binutils occasionally return empty output on a perfectly
+    # healthy .so (observed on llvm-nm twice on 2026-07-23 and on
+    # llvm-readelf on 2026-07-24: the library was bit-identical and passed
+    # on retry) — retry each check a couple of times before failing.
+    check_retry() { # check_retry <error message> <cmd...>
+        local msg="$1"; shift
+        local _try
+        for _try in 1 2 3; do
+            "$@" && return 0
+            sleep 1
+        done
+        die "$msg ($abi)"
+    }
+    nm_grep()      { "$LLVM/llvm-nm" -D "$out/libhwengine.so" | grep -q "$1"; }
+    readelf_grep() { "$LLVM/llvm-readelf" -l "$out/libhwengine.so" | grep -q "$1"; }
+    check_retry "RunEngine not exported" nm_grep " T RunEngine"
+    check_retry "JNI land preview export missing" nm_grep \
+        "Java_org_hedgewars_hedgeroid_EngineProtocol_PascalExports_HWGenLandPreview"
+    check_retry "16 KB page alignment missing" readelf_grep "0x4000$"
 
     jni="$ANDROID_DIR/app/src/main/jniLibs/$abi"
     mkdir -p "$jni"
