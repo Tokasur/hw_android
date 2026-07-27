@@ -218,7 +218,8 @@ else if curBind = 'ljump' then ammoMenuAction:= amaClose
 // Precise aim, fuse cycling and hedgehog switching all apply to the weapon
 // you are ALREADY holding; firing them from inside the menu is surprising
 // (and used to close it as a side effect).
-else if (curBind = '+precise') or (curBind = 'timer_u') or (curBind = 'switch')
+else if (curBind = '+precise') or (curBind = 'timer_u') or (curBind = '+bounce')
+     or (curBind = 'switch')
     then ammoMenuAction:= amaIgnore
 else ammoMenuAction:= amaPass
 end;

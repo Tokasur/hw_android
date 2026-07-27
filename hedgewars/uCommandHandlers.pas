@@ -31,6 +31,9 @@ uses uCommands, uTypes, uVariables, uIO, uDebug, uConsts, uScript, uUtils, SDLh,
      {$IFDEF USE_VIDEO_RECORDING}, uVideoRec {$ENDIF};
 
 var cTagsMasks : array[0..15] of byte = (7, 0, 0, 0, 0, 4, 5, 6, 15, 8, 8, 8, 8, 12, 13, 14);
+    // '+bounce' bookkeeping, see chBounce_p
+    bounceKeyHeld: boolean = false;
+    bouncePreciseWasHeld: boolean = false;
     cTagsMasksNoHealth: array[0..15] of byte = (3, 0, 1, 2, 0, 0, 0, 0, 11, 8, 9, 10, 8, 8, 8, 8);
 
 procedure chGenCmd(var s: shortstring);
@@ -452,6 +455,44 @@ if t <> MSGPARAM_INVALID then
     // Delegate the actual change to /timer
     ParseCommand('timer ' + Char(tb + Ord('0')), true);
     end;
+end;
+
+// Cycle bounciness on its own key.
+//
+// The engine has no bounce command: HHSetTimer picks bounciness over fuse
+// only when gmPrecise is set on the hedgehog at the moment the gmTimer
+// message is consumed — which happens one gear tick later. So do what the
+// on-screen bounce widget does (uTouch): raise precise with the press and
+// drop it on release, which is always at least a tick afterwards. Precise
+// that the player was already holding is left alone.
+procedure chBounce_p(var s: shortstring);
+var t: LongWord;
+begin
+s:= s; // avoid compiler hint
+if CheckNoTeamOrHH then
+    exit;
+t:= HHGetBouncinessMsg(CurrentHedgehog^.Gear);
+if t = MSGPARAM_INVALID then // current weapon has no bounciness: no-op
+    exit;
+Inc(t);
+if t > 5 then
+    t:= 1;
+bouncePreciseWasHeld:= (CurrentHedgehog^.Gear^.Message and gmPrecise) <> 0;
+if not bouncePreciseWasHeld then
+    ParseCommand('+precise', true);
+ParseCommand('timer ' + Char(byte(t) + Ord('0')), true);
+bounceKeyHeld:= true
+end;
+
+procedure chBounce_m(var s: shortstring);
+begin
+s:= s; // avoid compiler hint
+if bounceKeyHeld then
+    begin
+    bounceKeyHeld:= false;
+    if not bouncePreciseWasHeld then
+        ParseCommand('-precise', true)
+    end
 end;
 
 procedure chSlot(var s: shortstring);
@@ -1081,6 +1122,8 @@ begin
     RegisterVariable('-mission', @chShowMission_m, true);
     RegisterVariable('gearinfo', @chGearInfo     , true );
     RegisterVariable('timer_u' , @chTimerU       , true );
+    RegisterVariable('+bounce' , @chBounce_p     , true );
+    RegisterVariable('-bounce' , @chBounce_m     , true );
 end;
 
 procedure freeModule;
