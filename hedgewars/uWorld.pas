@@ -260,6 +260,22 @@ cGearScrEdgesDist:= min(2 * cScreenHeight div 5, 2 * cScreenWidth div 5);
 end;
 
 procedure InitTouchInterface;
+{$IFDEF USE_TOUCH_INTERFACE}
+    // The touch hitbox is the drawn sprite grown by a small margin on every
+    // side: field-tested on phones, the exact sprite rect is slightly too
+    // easy to miss. The margin (8% of the button width, ~4-5 px at the
+    // default scale) stays well under the smallest gap between buttons
+    // (12 px between the arrows), so grown hitboxes never overlap.
+    procedure SetActiveWithPadding(var widget: TOnScreenWidget);
+    var pad: LongInt;
+    begin
+        pad:= Round(widget.frame.w * 0.08);
+        widget.active.x:= widget.frame.x - pad;
+        widget.active.y:= widget.frame.y - pad;
+        widget.active.w:= widget.frame.w + 2 * pad;
+        widget.active.h:= widget.frame.h + 2 * pad;
+    end;
+{$ENDIF}
 begin
 {$IFDEF USE_TOUCH_INTERFACE}
 
@@ -275,10 +291,7 @@ with JumpWidget do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= (cScreenWidth shr 1) - Round(frame.w * 1.2);
     frame.y:= cScreenHeight - frame.h * 2;
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(JumpWidget);
     end;
 
 with AMWidget do
@@ -289,10 +302,7 @@ with AMWidget do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= (cScreenWidth shr 1) - frame.w * 2;
     frame.y:= cScreenHeight - Round(frame.h * 1.2);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(AMWidget);
     end;
 
 with arrowLeft do
@@ -303,10 +313,7 @@ with arrowLeft do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= -(cScreenWidth shr 1) + Round(frame.w * 0.25);
     frame.y:= cScreenHeight - Round(frame.h * 1.5);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(arrowLeft);
     end;
 
 with arrowRight do
@@ -317,10 +324,7 @@ with arrowRight do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= -(cScreenWidth shr 1) + Round(frame.w * 1.5);
     frame.y:= cScreenHeight - Round(frame.h * 1.5);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(arrowRight);
     end;
 
 with firebutton do
@@ -329,12 +333,12 @@ with firebutton do
     sprite:= sprFireButton;
     frame.w:= Round(spritesData[sprite].Texture^.w * buttonScale);
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
-    frame.x:= arrowRight.frame.x + arrowRight.frame.w;
+    // Clear gap to the move-right arrow (they used to sit edge to edge,
+    // the single most reported touch misclick), sized like the other
+    // inter-button spacings so it scales with the UI.
+    frame.x:= arrowRight.frame.x + arrowRight.frame.w + Round(arrowRight.frame.w * 0.3);
     frame.y:= arrowRight.frame.y + (arrowRight.frame.w shr 1) - (frame.w shr 1);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(firebutton);
     end;
 
 with arrowUp do
@@ -345,10 +349,7 @@ with arrowUp do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= (cScreenWidth shr 1) - frame.w * 2;
     frame.y:= jumpWidget.frame.y - Round(frame.h * 1.25);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(arrowUp);
     with moveAnim do
          begin
          target.x:= frame.x;
@@ -366,10 +367,7 @@ with arrowDown do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= (cScreenWidth shr 1) - frame.w * 2;
     frame.y:= jumpWidget.frame.y - Round(frame.h * 1.25);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(arrowDown);
     with moveAnim do
         begin
         target.x:= frame.x;
@@ -389,10 +387,7 @@ with pauseButton do
     // (rounded glass / camera cutout), which left this button half-hidden.
     frame.x:= cScreenWidth div 2 - frame.w - 16;
     frame.y:= 10;
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(pauseButton);
     end;
 
 with utilityWidget do
@@ -403,10 +398,7 @@ with utilityWidget do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= arrowLeft.frame.x;
     frame.y:= arrowLeft.frame.y - Round(frame.h * 1.25);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(utilityWidget);
     with moveAnim do
         begin
         target.x:= frame.x;
@@ -424,10 +416,7 @@ with utilityWidget2 do
     frame.h:= Round(spritesData[sprite].Texture^.h * buttonScale);
     frame.x:= utilityWidget.frame.x + Round(frame.w * 1.25);
     frame.y:= arrowLeft.frame.y - Round(frame.h * 1.25);
-    active.x:= frame.x;
-    active.y:= frame.y;
-    active.w:= frame.w;
-    active.h:= frame.h;
+    SetActiveWithPadding(utilityWidget2);
     with moveAnim do
         begin
         target.x:= frame.x;
