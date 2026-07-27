@@ -48,9 +48,25 @@ object BindsWriter {
         "hjump" to "j0b0",     // A: high jump
         "ljump" to "j0b1",     // B: long jump
         "ammomenu" to "j0b3",  // Y: weapon menu
-        // shoulders: precise aim / weapon timer
+        // Shoulders. R1/R2 cycle the grenade fuse (1..5 s); holding a precise
+        // key at the same time cycles bounciness instead, which is how the
+        // engine exposes bounce — it has no command of its own (chTimerU
+        // switches on gmPrecise). "timer_u" self-guards: it is a no-op on
+        // weapons that are neither timerable nor bounce-able.
         "+precise" to "j0b9",  // L1
-        "timer 3" to "j0b10",  // R1
+        "timer_u" to "j0b10",  // R1
+        // L2/R2. Analog triggers rest at -32767, so the "d" half of a trigger
+        // axis reads as permanently held — never bind j0a4d/j0a5d. The "u"
+        // half fires around 80% pull, which is a deliberate press.
+        // Pads that report their triggers as digital buttons instead surface
+        // them as buttons 15/16; binding both costs nothing (an absent key
+        // name is skipped with a log line).
+        "timer_u" to "j0a5u",  // R2 pulled
+        "timer_u" to "j0b16",  // R2 as a digital button
+        // Only the digital form of L2 gets the HOLD command: if a pad ordered
+        // its axes differently, a stuck "+precise" would be far more annoying
+        // than a stray fuse change.
+        "+precise" to "j0b15", // L2 as a digital button
         // start = pause, either thumb click = switch hedgehog
         "pause" to "j0b6",
         "switch" to "j0b7",    // ThumbL click

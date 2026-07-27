@@ -24,7 +24,23 @@ class BindsWriterTest {
         assertTrue(lines.contains("+left=j0b13"))
         assertTrue(lines.contains("+attack=j0b2"))
         assertTrue(lines.contains("pause=j0b6"))
-        assertTrue(lines.contains("timer 3=j0b10"))
+        assertTrue(lines.contains("timer_u=j0b10"))
+    }
+
+    @Test
+    fun `grenade fuse cycles instead of being pinned to one value`() {
+        val entries = writeTo(true).filter { it.contains("=") }
+        // "timer N" pins the fuse to N and can never cycle; timer_u steps it.
+        assertTrue(entries.none { it.substringBefore('=').startsWith("timer ") })
+        assertTrue(entries.any { it.startsWith("timer_u=") })
+    }
+
+    @Test
+    fun `no trigger axis is bound on its released half`() {
+        // Analog triggers rest at -32767, so jNaXd reads as permanently held:
+        // anything bound there would fire once and never let go.
+        val keys = writeTo(true).map { it.substringAfter('=') }
+        assertTrue(keys.none { it matches Regex("""j\da[45]d""") })
     }
 
     @Test
