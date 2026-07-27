@@ -9,35 +9,52 @@ import java.io.File
  * (uInputHandler.pas SetBinds is desktop-only); the only binding channel is
  * the `[Binds]` section of <user-prefix>/Config/settings.ini, read by
  * loadBinds('dbind', …) from InitDefaultBinds. Key names are raw SDL joystick
- * elements: j<dev>a<axis>u|d, j<dev>h<hat>u|r|d|l, j<dev>b<button>.
+ * elements: j<dev>a<axis>u|d and j<dev>b<button>.
  *
- * SDL2's Android backend exposes the D-pad as hat 0, the left stick as axes
- * 0/1 and A/B/X/Y as buttons 0-3.
+ * Real SDL2 Android numbering (src/joystick/android/SDL_sysjoystick.c):
+ * the D-PAD IS BUTTONS 11-14 — never a hat. The backend converts both d-pad
+ * KeyEvents and AXIS_HAT motion into SDL_CONTROLLER_BUTTON_DPAD_* presses and
+ * forces nhats=0, so j<dev>h* names do not even exist on Android. Buttons:
+ * 0=A 1=B 2=X 3=Y 6=Start/Menu 7=ThumbL 8=ThumbR 9=L1 10=R1 11=DpadUp
+ * 12=DpadDown 13=DpadLeft 14=DpadRight. Axes (sorted by Android axis id):
+ * 0=LeftX 1=LeftY 2=RightX 3=RightY, Android Y-positive pointing DOWN; the
+ * engine names the positive direction `u` and the negative one `d`
+ * (uInputHandler.pas ControllerAxisEvent, ±20000 deadzone).
+ *
+ * One command may be bound to SEVERAL keys (d-pad button + stick axis): the
+ * engine's rebind-displacement is disabled on MOBILE (uInputHandler.pas
+ * addBind). Each KEY must appear at most once.
  */
 object BindsWriter {
 
-    // One physical key per command (the engine unbinds the previous key when
-    // a command is bound again). D-pad is SDL hat 0 on Android (AXIS_HAT_X/Y,
-    // the standard mapping for modern gamepads); button indices follow
-    // SDLControllerManager.getButtonMask: 0=A 1=B 2=X 3=Y 7=Start 8=ThumbL
-    // 9=ThumbR 10=L1 11=R1.
-    private val GAMEPAD_BINDS = linkedMapOf(
-        // D-pad: walk + aim
-        "+left" to "j0h0l",
-        "+right" to "j0h0r",
-        "+up" to "j0h0u",
-        "+down" to "j0h0d",
+    private val GAMEPAD_BINDS = listOf(
+        // D-pad (SDL buttons 11-14): walk + aim
+        "+up" to "j0b11",
+        "+down" to "j0b12",
+        "+left" to "j0b13",
+        "+right" to "j0b14",
+        // Left stick (axes 0/1): walk + aim, same commands as the d-pad
+        "+right" to "j0a0u",
+        "+left" to "j0a0d",
+        "+down" to "j0a1u",   // Android Y+ = down
+        "+up" to "j0a1d",
+        // Right stick (axes 2/3): camera
+        "+cur_r" to "j0a2u",
+        "+cur_l" to "j0a2d",
+        "+cur_d" to "j0a3u",  // Android Y+ = down
+        "+cur_u" to "j0a3d",
         // face buttons
         "+attack" to "j0b2",   // X: fire (hold for power)
         "hjump" to "j0b0",     // A: high jump
         "ljump" to "j0b1",     // B: long jump
         "ammomenu" to "j0b3",  // Y: weapon menu
         // shoulders: precise aim / weapon timer
-        "+precise" to "j0b10", // L1
-        "timer 3" to "j0b11",  // R1
-        // start = pause, thumb click = switch hedgehog
-        "pause" to "j0b7",
-        "switch" to "j0b9",
+        "+precise" to "j0b9",  // L1
+        "timer 3" to "j0b10",  // R1
+        // start = pause, either thumb click = switch hedgehog
+        "pause" to "j0b6",
+        "switch" to "j0b7",    // ThumbL click
+        "switch" to "j0b8",    // ThumbR click
     )
 
     /**

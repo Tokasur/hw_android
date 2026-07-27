@@ -736,6 +736,7 @@ begin
         while (i <= High(binds.binds)) and (binds.binds[i] <> KeyName) do
             inc(i);
 
+{$IFNDEF MOBILE}
         if (i <= High(binds.binds)) then
         begin
             code:= Low(binds.indices);
@@ -747,6 +748,15 @@ begin
             binds.indices[code]:= 0;
             binds.binds[i]:= ''
         end;
+{$ELSE}
+        // On MOBILE the displacement above is skipped: there is no rebinding
+        // UI — the frontend regenerates settings.ini wholesale on every launch
+        // and each match runs in a pristine engine process, so the dedup would
+        // only forbid what the frontend deliberately writes: one command on
+        // several physical inputs (d-pad button AND stick axis AND keyboard).
+        // When the scan found the command's existing slot, the new key simply
+        // joins it (newCode := i below); the previous key stays bound.
+{$ENDIF}
 
         if binds.indices[b] > 0 then
             newCode:= binds.indices[b]

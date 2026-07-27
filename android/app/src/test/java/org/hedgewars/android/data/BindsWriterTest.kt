@@ -20,10 +20,30 @@ class BindsWriterTest {
         val lines = writeTo(true)
         assertTrue(lines.contains("[Binds]"))
         // loadBinds parses "<command>=<keyname>" into: dbind <keyname> <command>
-        assertTrue(lines.contains("+left=j0h0l"))
+        // D-pad is SDL Android buttons 11-14 (never a hat)
+        assertTrue(lines.contains("+left=j0b13"))
         assertTrue(lines.contains("+attack=j0b2"))
-        assertTrue(lines.contains("pause=j0b7"))
-        assertTrue(lines.contains("timer 3=j0b11"))
+        assertTrue(lines.contains("pause=j0b6"))
+        assertTrue(lines.contains("timer 3=j0b10"))
+    }
+
+    @Test
+    fun `movement is bound to both d-pad buttons and left stick axes`() {
+        val lines = writeTo(true)
+        assertTrue(lines.contains("+left=j0b13"))
+        assertTrue(lines.contains("+left=j0a0d"))
+        assertTrue(lines.contains("+right=j0b14"))
+        assertTrue(lines.contains("+right=j0a0u"))
+    }
+
+    @Test
+    fun `right stick drives the camera cursor`() {
+        val lines = writeTo(true)
+        assertTrue(lines.contains("+cur_r=j0a2u"))
+        assertTrue(lines.contains("+cur_l=j0a2d"))
+        // Android Y axis is positive DOWNWARD
+        assertTrue(lines.contains("+cur_d=j0a3u"))
+        assertTrue(lines.contains("+cur_u=j0a3d"))
     }
 
     @Test
@@ -47,11 +67,13 @@ class BindsWriterTest {
     }
 
     @Test
-    fun `one key per command - no duplicate keys or commands`() {
+    fun `keys are unique - commands may repeat across physical inputs`() {
         val entries = writeTo(true).filter { it.contains("=") }
-        val commands = entries.map { it.substringBefore('=') }
         val keys = entries.map { it.substringAfter('=') }
-        assertEquals(commands.size, commands.toSet().size)
+        // A key can carry only one command (engine indices are per-key)…
         assertEquals(keys.size, keys.toSet().size)
+        // …but one command on several keys is the point (d-pad + stick).
+        val commands = entries.map { it.substringBefore('=') }
+        assertTrue(commands.size > commands.toSet().size)
     }
 }
