@@ -42,7 +42,9 @@
              the frontend down. -->
         <activity
             android:name=".game.GameActivity"
+            android:autoRemoveFromRecents="true"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:excludeFromRecents="true"
             android:exported="false"
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"

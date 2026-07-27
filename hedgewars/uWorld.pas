@@ -385,8 +385,10 @@ with pauseButton do
     sprite:= sprPauseButton;
     frame.w:= Round(spritesData[sprPauseButton].Texture^.w * buttonScale);
     frame.h:= Round(spritesData[sprPauseButton].Texture^.h * buttonScale);
-    frame.x:= cScreenWidth div 2 - frame.w;
-    frame.y:= 0;
+    // Inset from the exact corner: phone displays clip the corner pixels
+    // (rounded glass / camera cutout), which left this button half-hidden.
+    frame.x:= cScreenWidth div 2 - frame.w - 16;
+    frame.y:= 10;
     active.x:= frame.x;
     active.y:= frame.y;
     active.w:= frame.w;

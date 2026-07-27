@@ -1109,7 +1109,16 @@ implementation
 
 procedure initModule;
 begin
-    Loadgles11('libGLESv1_CM.so');
+    // Render the engine's fixed-function ES 1.1 calls through gl4es, which
+    // translates them to ES 2.0. Native ES 1.1 drivers are unreliable on
+    // modern GPUs and the emulator's SwiftShader; ES 2.0 is universal. Fall
+    // back to the system ES 1.1 library if gl4es is not packaged.
+    try
+        Loadgles11('libgl4es.so');
+    except
+        on Exception do
+            Loadgles11('libGLESv1_CM.so');
+    end;
 end;
 
 procedure freeModule;

@@ -74,6 +74,7 @@ for abi in "${ABIS[@]}"; do
     log "[$abi] FPC compile (hwLibrary.pas)"
     ( cd "$out" && \
       "$FPC_PREFIX/$ppc" -Tandroid $cpuopt -Cn -O2 -Xs \
+        -dDEBUGFILE \
         -FD"$WRAPPERS" \
         -Fu"$units/"'*' \
         -Fu"$REPO_ROOT/hedgewars" \
@@ -91,8 +92,17 @@ for abi in "${ABIS[@]}"; do
         || { tail -30 "$out/link.log"; die "link failed for $abi"; }
 
     log "[$abi] verify exports + 16 KB alignment"
-    "$LLVM/llvm-nm" -D "$out/libhwengine.so" | grep -q " T RunEngine" \
-        || die "RunEngine not exported ($abi)"
+    # llvm-nm occasionally returns empty output on a perfectly healthy .so
+    # (observed twice on 2026-07-23: the rebuilt library was bit-identical and
+    # passed on retry) — retry a couple of times before declaring failure.
+    exported=0
+    for _try in 1 2 3; do
+        if "$LLVM/llvm-nm" -D "$out/libhwengine.so" | grep -q " T RunEngine"; then
+            exported=1; break
+        fi
+        sleep 1
+    done
+    [ "$exported" = 1 ] || die "RunEngine not exported ($abi)"
     "$LLVM/llvm-nm" -D "$out/libhwengine.so" \
         | grep -q "Java_org_hedgewars_hedgeroid_EngineProtocol_PascalExports_HWGenLandPreview" \
         || die "JNI land preview export missing ($abi)"

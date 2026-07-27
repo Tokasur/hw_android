@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.hedgewars.android.R
 import org.hedgewars.android.data.UserPrefs
+import org.hedgewars.android.ui.common.DropdownPicker
 
 @Composable
 fun SettingsScreen(nav: NavController) {
@@ -35,6 +36,16 @@ fun SettingsScreen(nav: NavController) {
     var lowQuality by remember { mutableStateOf(prefs.lowQuality) }
     var showFps by remember { mutableStateOf(prefs.showFps) }
     var gamepad by remember { mutableStateOf(prefs.gamepadBinds) }
+    var uiScale by remember { mutableStateOf(prefs.uiScale) }
+
+    // Pref value -> visible label for the in-game UI size choices.
+    val uiScaleOptions = listOf(
+        "auto" to stringResource(R.string.settings_ui_scale_auto),
+        "1.0" to stringResource(R.string.settings_ui_scale_100),
+        "1.5" to stringResource(R.string.settings_ui_scale_150),
+        "2.0" to stringResource(R.string.settings_ui_scale_200),
+        "2.5" to stringResource(R.string.settings_ui_scale_250),
+    )
 
     Column(
         modifier = Modifier
@@ -55,6 +66,18 @@ fun SettingsScreen(nav: NavController) {
         }
         ToggleRow(stringResource(R.string.settings_show_fps), showFps) {
             showFps = it; prefs.showFps = it
+        }
+
+        Text(stringResource(R.string.settings_ui), style = MaterialTheme.typography.titleMedium)
+        DropdownPicker(
+            label = stringResource(R.string.settings_ui_scale),
+            options = uiScaleOptions.map { it.second },
+            selected = uiScaleOptions.firstOrNull { it.first == uiScale }?.second
+                ?: uiScaleOptions.first().second,
+        ) { label ->
+            val value = uiScaleOptions.first { it.second == label }.first
+            uiScale = value
+            prefs.uiScale = value
         }
 
         Text(stringResource(R.string.settings_gamepad), style = MaterialTheme.typography.titleMedium)

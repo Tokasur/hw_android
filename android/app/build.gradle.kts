@@ -24,8 +24,8 @@ android {
         applicationId = "org.hedgewars.android"
         minSdk = 21
         targetSdk = 36
-        versionCode = 100 // major*10000 + minor*100 + patch
-        versionName = "0.1.0"
+        versionCode = 207 // major*10000 + minor*100 + patch
+        versionName = "0.2.7"
     }
 
     signingConfigs {
@@ -41,8 +41,15 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // R8 full-mode minification breaks the SDL activity launch: the
+            // game window never reports drawn/focused, so SDL's main thread
+            // (which gates on mHasFocus) never starts and the engine never
+            // runs. The keep rules that would make it safe aren't pinned down
+            // yet, so keep the release build unminified — the sideload APK is
+            // dominated by the ~218 MB game data anyway, so the size cost of
+            // skipping code shrinking is negligible.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

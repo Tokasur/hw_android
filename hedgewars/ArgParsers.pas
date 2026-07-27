@@ -331,7 +331,11 @@ var paramIndex: LongInt;
 //var tmpInt: LongInt;
 begin
 
-    paramIndex:= {$IFDEF HWLIBRARY}0{$ELSE}1{$ENDIF};
+    // On Android the engine library is entered through SDL_main, which puts
+    // the process name ("app_process") in argv[0]; skip it (as the desktop
+    // does) so it is not mistaken for a demo file name. GetParams already
+    // assumes --internal lives at index 1.
+    paramIndex:= {$IFDEF ANDROID}1{$ELSE}{$IFDEF HWLIBRARY}0{$ELSE}1{$ENDIF}{$ENDIF};
     paramTotal:= ParamCount; //-1 because pascal enumeration is inclusive
     wrongParameter:= false;
     while (paramIndex <= paramTotal) do

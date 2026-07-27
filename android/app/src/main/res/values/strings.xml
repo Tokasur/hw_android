@@ -63,6 +63,13 @@
     <string name="settings_quality">Graphics quality</string>
     <string name="settings_quality_low">Reduced quality (faster)</string>
     <string name="settings_show_fps">Show FPS</string>
+    <string name="settings_ui">In-game interface</string>
+    <string name="settings_ui_scale">Buttons &amp; HUD size</string>
+    <string name="settings_ui_scale_auto">Auto (recommended)</string>
+    <string name="settings_ui_scale_100">100% (small)</string>
+    <string name="settings_ui_scale_150">150%</string>
+    <string name="settings_ui_scale_200">200% (big)</string>
+    <string name="settings_ui_scale_250">250% (huge)</string>
     <string name="settings_gamepad">Gamepad</string>
     <string name="settings_gamepad_enabled">Enable default gamepad mapping</string>
     <string name="settings_controls_help">Touch controls help</string>
@@ -79,4 +86,6 @@
     <string name="controls_title">Controls</string>
     <string name="controls_touch">Touch: drag to scroll, pinch to zoom. Use the on-screen arrows to walk, the aim widget to aim, the fire button to shoot (hold for more power). Tap your hedgehog or the corner button to open the weapon menu. Tap a target for air strikes.</string>
     <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, A jump, B backflip, X fire, Y weapon menu, Start pause.</string>
+    <!-- Engine crash handling -->
+    <string name="engine_crash_retry">The game crashed at start — retrying…</string>
 </resources>

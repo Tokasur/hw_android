@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resources the shrinker cannot see as reachable:
+  - Theme.Hedgewars is only referenced through the postSplashScreenTheme
+    custom attribute (splashscreen library), which the shrinker does not
+    follow; removing it crashes installSplashScreen() at startup.
+  - ic_launcher_foreground is referenced from the splash theme and the
+    adaptive icon XML only.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@style/Theme_Hedgewars*,@style/Theme.Hedgewars,@drawable/ic_launcher_foreground,@mipmap/ic_launcher_foreground" />

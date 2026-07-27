@@ -119,11 +119,17 @@ for abi in "${ABIS[@]}"; do
 
     build_rust_future "$abi"
 
+    # gl4es: fixed-function GL ES 1.1 -> ES 2.0 translator, built as a shared
+    # library with visible gl* symbols (the engine dlopens it, see gles11.pp).
+    build_one "$abi" "$ANDROID_DIR/third_party/gl4es-shared" gl4es \
+        -DGL4ES_DIR="$THIRD_PARTY/gl4es"
+    cp "$ANDROID_DIR/native/build/$abi/gl4es/libgl4es.so" "$prefix/lib/"
+
     # Stage every runtime .so for Gradle packaging
     jni="$ANDROID_DIR/app/src/main/jniLibs/$abi"
     mkdir -p "$jni"
     for so in SDL2 SDL2_image SDL2_mixer SDL2_ttf SDL2_net \
-              lua physfs physlayer main hwengine_future; do
+              lua physfs physlayer main hwengine_future gl4es; do
         cp "$prefix/lib/lib${so}.so" "$jni/"
     done
     log "[$abi] staged $(ls "$jni" | wc -l) libraries into jniLibs"

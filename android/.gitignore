@@ -21,3 +21,6 @@ keystore.properties
 # IDE
 .idea/
 *.iml
+
+# Kotlin compiler session state
+.kotlin/

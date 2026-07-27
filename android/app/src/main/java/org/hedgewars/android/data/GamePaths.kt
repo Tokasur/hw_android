@@ -14,14 +14,18 @@ class GamePaths(context: Context) {
     val root: File = context.filesDir
     val dataDir: File = File(root, "Data")
     val userDir: File = File(root, "user")
-    val userConfigDir: File = File(userDir, "Config")
     val userDataDir: File = File(userDir, "Data")
-    val userTeamsDir: File = File(userConfigDir, "Teams")
-    val settingsIni: File = File(userConfigDir, "settings.ini")
+    // The engine mounts the user prefix AT the virtual path "/Config"
+    // (uPhysFSLayer: pfsMount(userPrefix, '/Config')), so the files it opens
+    // as /Config/settings.ini and /Config/Teams/x.hwt live at the user dir
+    // ROOT — a physical Config/ subdirectory is invisible to it (the binds,
+    // including the back-button quit and all gamepad bindings, were silently
+    // never loaded when settings.ini sat in user/Config/).
+    val userTeamsDir: File = File(userDir, "Teams")
+    val settingsIni: File = File(userDir, "settings.ini")
     val versionMarker: File = File(root, ".data-version")
 
     fun ensureUserDirs() {
-        userConfigDir.mkdirs()
         userDataDir.mkdirs()
         userTeamsDir.mkdirs()
     }

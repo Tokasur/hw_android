@@ -913,11 +913,21 @@ begin
 {$IFDEF IPHONEOS}
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 0);
     SDL_GL_SetAttribute(SDL_GL_RETAINED_BACKING, 1);
- 
+
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 {$ELSE}
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    {$IFDEF ANDROID}
+    // The engine issues fixed-function OpenGL ES 1.1 calls, but they are
+    // routed through gl4es (see gles11.pp), which needs a real ES 2.0 context
+    // underneath. Request ES 2.0 explicitly so gl4es has an ES2 context to
+    // translate into — this is the reliable path on modern GPUs and on the
+    // emulator's SwiftShader, both of which have flaky native ES 1.1.
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 4); // SDL_GL_CONTEXT_PROFILE_ES
+    {$ENDIF}
 {$ENDIF}
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
@@ -1273,6 +1283,20 @@ begin
         end
     else
         begin
+{$IFDEF ANDROID}
+        // Android runs a single borderless fullscreen window whose buffer
+        // size is fixed by the frontend for the whole match. Any 'fullscr'
+        // arriving after the window exists is noise from system window
+        // animations — most notably the predictive-back gesture resizing the
+        // dying window on the way out, which used to trigger a full GL and
+        // texture rebuild through gl4es mid-teardown and kill the engine
+        // (IPC connection lost in the middle of StoreLoad). Screen sizes were
+        // already restored above; nothing else may change. Suspend/resume
+        // never reaches here: leaving the screen ends the match by design
+        // (GameActivity.onStop).
+        AddFileLog('fullscr ignored: Android window already up');
+        exit;
+{$ENDIF}
         AmmoMenuInvalidated:= true;
 {$IFDEF IPHONEOS}
         // chFullScr is called when there is a rotation event and needs the SetScale and SetupOpenGL to set up the new resolution
@@ -1448,8 +1472,11 @@ begin
             end;
 
     TTF_Quit();
-    SDL_GL_DeleteContext(SDLGLcontext);
-    SDL_DestroyWindow(SDLwindow);
-    SDL_Quit();
+    // The GL context, window and SDL itself are owned by hwengine's
+    // freeEverything, which destroys them exactly once after every module
+    // (including uTextures) has released its GL objects. Destroying them
+    // here as well double-freed the same never-nil'd handles and tore the
+    // context down before uTextures/GLUnit ran their cleanup — harmless on
+    // desktop drivers, a hard SIGSEGV through gl4es on Android.
 end;
 end.

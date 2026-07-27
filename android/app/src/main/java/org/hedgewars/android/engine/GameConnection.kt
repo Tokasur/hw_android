@@ -3,6 +3,7 @@ package org.hedgewars.android.engine
 import android.util.Log
 import java.io.Closeable
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -36,7 +37,13 @@ class GameConnection(
         fun setVar(campaign: Boolean, name: String, value: String)
     }
 
-    private val server = ServerSocket(0, 1, InetAddress.getLoopbackAddress())
+    // Bind the IPv4 loopback explicitly: the engine (uIO.pas) connects to
+    // "127.0.0.1", so a server bound to the IPv6 loopback (::1, what
+    // getLoopbackAddress() may return) would refuse the connection.
+    private val server = ServerSocket().apply {
+        reuseAddress = true
+        bind(InetSocketAddress(InetAddress.getByName("127.0.0.1"), 0), 1)
+    }
     val port: Int get() = server.localPort
 
     @Volatile
@@ -70,7 +77,11 @@ class GameConnection(
                         output.write(EngineProtocol.encodeAll(cfg))
                         output.flush()
                     }
-                    'E' -> listener.onEngineError(trimmedText(msg))
+                    // An error after the game already reported its end (q/Q)
+                    // is teardown noise, not a match failure — the outcome
+                    // must stay "ok" so the menu doesn't show a crash dialog.
+                    'E' -> if (!finished && !interrupted) listener.onEngineError(trimmedText(msg))
+                        else Log.w(TAG, "post-quit engine error ignored: ${trimmedText(msg)}")
                     'i' -> if (msg.size >= 2) {
                         listener.onStats(msg[1].toInt().toChar(), String(msg, 2, msg.size - 2, Charsets.UTF_8))
                     }

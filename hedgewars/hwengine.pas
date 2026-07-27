@@ -232,13 +232,19 @@ game to freeze if one online player minimizes Hedgewars. *)
 {$ENDIF}
                         SDL_WINDOWEVENT_RESTORED:
                                 begin
-                                if GameState = gsSuspend then
-                                    GameState:= previousGameState;
                                 cWindowedMaximized:= false;
 {$IFDEF ANDROID}
-                                //This call is used to reinitialize the glcontext and reload the textures
-                                ParseCommand('fullscr '+intToStr(LongInt(cFullScreen)), true);
+                                // Rebuild the GL context and reload all textures
+                                // ONLY when returning from a real suspend (the
+                                // context was destroyed while backgrounded). A
+                                // spurious RESTORED at first window show would
+                                // otherwise run a destructive reload that
+                                // segfaults before the first game frame.
+                                if GameState = gsSuspend then
+                                    ParseCommand('fullscr '+intToStr(LongInt(cFullScreen)), true);
 {$ENDIF}
+                                if GameState = gsSuspend then
+                                    GameState:= previousGameState;
                                 end;
                         SDL_WINDOWEVENT_MAXIMIZED:
                                 cWindowedMaximized:= true;
@@ -571,13 +577,22 @@ begin
         uChat.freeModule;
         uAmmos.freeModule;
         uRender.freeModule;
-        uStore.freeModule;          // closes SDL
+        uStore.freeModule;
 {$IFDEF USE_VIDEO_RECORDING}uVideoRec.freeModule;{$ENDIF}
 {$IFDEF USE_TOUCH_INTERFACE}uTouch.freeModule;{$ENDIF}  //stub
-{$IFDEF ANDROID}GLUnit.freeModule;{$ENDIF}
+        // GL teardown order matters on Android: uTextures calls
+        // glDeleteTextures, so it must run while the gl4es function pointers
+        // (nil'd by GLUnit.freeModule) and the GL context are still alive.
+        // The context/window/SDL are destroyed exactly once, last, and the
+        // handles nil'd so any late call is an idempotent no-op.
         uTextures.freeModule;
-        SDL_GL_DeleteContext(SDLGLcontext);
-        SDL_DestroyWindow(SDLwindow);
+{$IFDEF ANDROID}GLUnit.freeModule;{$ENDIF}
+        if SDLGLcontext <> nil then
+            SDL_GL_DeleteContext(SDLGLcontext);
+        SDLGLcontext:= nil;
+        if SDLwindow <> nil then
+            SDL_DestroyWindow(SDLwindow);
+        SDLwindow:= nil;
         SDL_Quit()
         end;
 
