@@ -71,6 +71,11 @@ const
     RCTRL  = $4000;
 
 var tkbd: array[0..cKbdMaxIndex] of boolean;
+    // Keys whose PRESS was taken over by the open ammo menu (see ProcessKey).
+    // The matching RELEASE must be taken over too, no matter what the menu
+    // state is by then — re-deciding on release is precisely what strands a
+    // movement or camera key in the "held" state.
+    tAmmoMenuNav: array[0..cKbdMaxIndex] of boolean;
     KeyNames: TKeyNames;
     CurrentBinds: TBinds;
     ControllerNumControllers: Integer;
@@ -188,6 +193,37 @@ for i:= 0 to ModifierCount do
     end;
 end;
 
+// Binds the open ammo menu takes over: walking the hedgehog and firing make
+// no sense while picking a weapon, and every one of them used to slam the
+// menu shut (they are missing from the allow-list further down in ProcessKey),
+// which made weapon selection impossible with a gamepad or keyboard.
+function isAmmoMenuBind(var curBind: shortstring): boolean;
+begin
+isAmmoMenuBind:= (curBind = '+left') or (curBind = '+right')
+              or (curBind = '+up') or (curBind = '+down')
+              or (curBind = '+attack')
+end;
+
+// Directions step the weapon cursor one menu cell; attack picks what is under
+// it. The cursor IS the selection here — the menu keeps no highlight index of
+// its own, it hit-tests CursorPoint every frame (uWorld.ShowAmmoMenu) — and
+// MoveCamera re-clamps it to the menu rect every frame, so stepping past an
+// edge simply stops at it.
+procedure navigateAmmoMenu(var curBind: shortstring; Trusted: boolean);
+const step = AMSlotSize + 1; // one cell, same pitch as uWorld's hit test
+begin
+if curBind = '+left' then
+    dec(CursorPoint.X, step)
+else if curBind = '+right' then
+    inc(CursorPoint.X, step)
+else if curBind = '+up' then
+    inc(CursorPoint.Y, step) // CursorPoint.Y grows towards the top of the screen
+else if curBind = '+down' then
+    dec(CursorPoint.Y, step)
+else // '+attack': same confirmation path as a mouse click or a touch tap
+    ParseCommand('put', Trusted)
+end;
+
 procedure ProcessKey(code: LongInt; KeyDown: boolean);
 var
     Trusted: boolean;
@@ -233,6 +269,26 @@ if(KeyDown and (code = SDLK_w)) then
 if CurrentBinds.indices[code] > 0 then
     begin
     curBind:= CurrentBinds.binds[CurrentBinds.indices[code]];
+
+    // While the ammo menu is up, movement/attack drive the menu instead.
+    // Decided on the press and remembered for the release: if the menu opens
+    // or closes while a key is held, the release must still be handled the
+    // way its press was, or the hedgehog walks forever (press walked, release
+    // eaten by the menu) or the camera scrolls forever (press moved the
+    // cursor, release leaked out as movement).
+    if KeyDown then
+        tAmmoMenuNav[code]:= bShowAmmoMenu
+                             and (CurrentTeam <> nil)
+                             and (not CurrentTeam^.ExtDriven)
+                             and isAmmoMenuBind(curBind);
+    if tAmmoMenuNav[code] then
+        begin
+        if KeyDown then
+            navigateAmmoMenu(curBind, Trusted)
+        else
+            tAmmoMenuNav[code]:= false;
+        exit
+        end;
 
     // Check if the keypress should end the ready phase.
     // Camera movement keys are "safe" since its equivalent to moving the mouse,

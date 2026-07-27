@@ -108,11 +108,7 @@ const cStereo_Sky           = 0.0500;
       AMTypeMaskY     = $00000002;
       AMTypeMaskAlpha = $00000004;
 
-{$IFDEF MOBILE}
-      AMSlotSize = 48;
-{$ELSE}
-      AMSlotSize = 32;
-{$ENDIF}
+      // AMSlotSize now lives in uConsts: the input handler needs it too.
       AMSlotPadding = (AMSlotSize - 32) shr 1;
 
 {$IFDEF USE_LANDSCAPE_AMMOMENU}

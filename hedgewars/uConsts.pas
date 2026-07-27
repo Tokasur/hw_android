@@ -68,6 +68,17 @@ const
     cameraKeyboardSpeed     : LongInt = 10;
     cameraKeyboardSpeedSlow : LongInt =  3;
 
+const
+    // Side of one ammo menu cell. The menu geometry itself lives in uWorld,
+    // but the input handler needs the cell size too, to step the weapon
+    // cursor cell by cell (uWorld uses uInputHandler, so the constant cannot
+    // live there).
+{$IFDEF MOBILE}
+    AMSlotSize = 48;
+{$ELSE}
+    AMSlotSize = 32;
+{$ENDIF}
+
     // color constants
     cWhiteColorChannels : TSDL_Color = (r:$FF; g:$FF; b:$FF; a:$FF);
     cNearBlackColorChannels : TSDL_Color = (r:$00; g:$00; b:$10; a:$FF);
