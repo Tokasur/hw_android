@@ -39,8 +39,84 @@ class BindsWriterTest {
     fun `no trigger axis is bound on its released half`() {
         // Analog triggers rest at -32767, so jNaXd reads as permanently held:
         // anything bound there would fire once and never let go.
-        val keys = writeTo(true).map { it.substringAfter('=') }
-        assertTrue(keys.none { it matches Regex("""j\da[45]d""") })
+        val axes = GamepadLayout.Axes(
+            leftX = 0, leftY = 1, rightX = 2, rightY = 3,
+            leftTrigger = 4, rightTrigger = 5,
+        )
+        val f = File.createTempFile("settings", ".ini").apply { deleteOnExit() }
+        BindsWriter.write(f, gamepadEnabled = true, axes = axes)
+        val keys = f.readLines().map { it.substringAfter('=') }
+        assertTrue(keys.contains("j0a5u"))
+        assertTrue(keys.none { it == "j0a4d" || it == "j0a5d" })
+    }
+
+    @Test
+    fun `stick axis numbers follow the device, not a guess`() {
+        // A pad that also reports RX/RY pushes its Z/RZ right stick to 4 and 5.
+        val axes = GamepadLayout.Axes(leftX = 0, leftY = 1, rightX = 4, rightY = 5)
+        val f = File.createTempFile("settings", ".ini").apply { deleteOnExit() }
+        BindsWriter.write(f, gamepadEnabled = true, axes = axes)
+        val lines = f.readLines()
+        assertTrue(lines.contains("+cur_r=j0a4u"))
+        assertTrue(lines.contains("+cur_u=j0a5d"))
+        // and nothing is bound to the axes the pad does not use for a stick
+        assertTrue(lines.none { it.endsWith("=j0a2u") || it.endsWith("=j0a3u") })
+    }
+
+    @Test
+    fun `absent controls produce no binds at all`() {
+        val f = File.createTempFile("settings", ".ini").apply { deleteOnExit() }
+        BindsWriter.write(f, gamepadEnabled = true, axes = GamepadLayout.Axes())
+        val keys = f.readLines().map { it.substringAfter('=') }
+        assertTrue(keys.none { it.startsWith("j0a") })
+        // buttons are fixed by SDL, so they are still there
+        assertTrue(keys.contains("j0b13"))
+    }
+
+    @Test
+    fun `SDL axis sort keeps Z between RY and RZ`() {
+        // Verbatim expectation from SDLControllerManager.RangeComparator.
+        val sorted = listOf(
+            MotionEventAxis.X, MotionEventAxis.Y, MotionEventAxis.Z,
+            MotionEventAxis.RZ, MotionEventAxis.RX, MotionEventAxis.RY,
+        ).sortedBy { GamepadLayout.sortKey(it) }
+        assertEquals(
+            listOf(
+                MotionEventAxis.X, MotionEventAxis.Y, MotionEventAxis.RX,
+                MotionEventAxis.RY, MotionEventAxis.Z, MotionEventAxis.RZ,
+            ),
+            sorted,
+        )
+    }
+
+    /** android.view.MotionEvent axis constants (not on the JVM test path). */
+    private object MotionEventAxis {
+        const val X = 0
+        const val Y = 1
+        const val Z = 11
+        const val RX = 12
+        const val RY = 13
+        const val RZ = 14
+    }
+
+    @Test
+    fun `a pad reporting an extra stick pair moves its right stick to 4 and 5`() {
+        // (axis, is it centred at rest) in SDL's sorted order for a pad
+        // reporting X, Y, RX, RY, Z, RZ with the right stick on Z/RZ.
+        val axes = GamepadLayout.fromSortedAxes(
+            listOf(
+                MotionEventAxis.X to true,
+                MotionEventAxis.Y to true,
+                MotionEventAxis.RX to false, // unipolar: these are the triggers
+                MotionEventAxis.RY to false,
+                MotionEventAxis.Z to true,
+                MotionEventAxis.RZ to true,
+            ),
+        )
+        assertEquals(4, axes?.rightX)
+        assertEquals(5, axes?.rightY)
+        assertEquals(2, axes?.leftTrigger)
+        assertEquals(3, axes?.rightTrigger)
     }
 
     @Test

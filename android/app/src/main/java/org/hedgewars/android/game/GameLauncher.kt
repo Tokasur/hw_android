@@ -11,6 +11,7 @@ import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.MissionConfig
 import org.hedgewars.android.data.BindsWriter
 import org.hedgewars.android.data.GamePaths
+import org.hedgewars.android.data.GamepadLayout
 import org.hedgewars.android.data.UserPrefs
 import org.hedgewars.android.engine.EngineArgs
 
@@ -43,7 +44,10 @@ class GameLauncher(private val context: Context) {
     ) {
         ensureFreshGameProcess(context)
         paths.ensureUserDirs()
-        BindsWriter.write(paths.settingsIni, prefs.gamepadBinds)
+        // Measure the pad's axis numbering now: it depends on which axes this
+        // particular device reports, and a guess binds the camera to axes that
+        // never move (or, worse, to a trigger).
+        BindsWriter.write(paths.settingsIni, prefs.gamepadBinds, GamepadLayout.detect())
 
         // Real display size (not the inset-clipped app area): the game runs
         // fullscreen immersive, and the engine paints exactly --width/--height
