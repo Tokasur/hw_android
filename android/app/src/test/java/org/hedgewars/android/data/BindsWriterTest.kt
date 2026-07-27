@@ -64,13 +64,36 @@ class BindsWriterTest {
     }
 
     @Test
-    fun `absent controls produce no binds at all`() {
+    fun `absent sticks produce no axis binds`() {
         val f = File.createTempFile("settings", ".ini").apply { deleteOnExit() }
         BindsWriter.write(f, gamepadEnabled = true, axes = GamepadLayout.Axes())
         val keys = f.readLines().map { it.substringAfter('=') }
+        // no stick axes -> no stick binds; triggers fall back to digital
         assertTrue(keys.none { it.startsWith("j0a") })
-        // buttons are fixed by SDL, so they are still there
         assertTrue(keys.contains("j0b13"))
+    }
+
+    @Test
+    fun `one physical trigger gets exactly one binding`() {
+        // Analog trigger present: axis form only — a pad reporting the trigger
+        // as axis AND button would otherwise fire +bounce twice per pull, and
+        // the two overlapped presses used to strand gmPrecise (frozen hog).
+        val analog = GamepadLayout.Axes(leftTrigger = 4, rightTrigger = 5)
+        val f1 = File.createTempFile("settings", ".ini").apply { deleteOnExit() }
+        BindsWriter.write(f1, gamepadEnabled = true, axes = analog)
+        val l1 = f1.readLines()
+        assertTrue(l1.contains("+bounce=j0a5u"))
+        assertTrue(l1.contains("+precise=j0a4u"))
+        assertTrue(l1.none { it.endsWith("=j0b16") || it.endsWith("=j0b15") })
+
+        // No analog trigger: digital fallback, once.
+        val digital = GamepadLayout.Axes(leftX = 0, leftY = 1)
+        val f2 = File.createTempFile("settings", ".ini").apply { deleteOnExit() }
+        BindsWriter.write(f2, gamepadEnabled = true, axes = digital)
+        val l2 = f2.readLines()
+        assertEquals(1, l2.count { it.startsWith("+bounce=") })
+        assertTrue(l2.contains("+bounce=j0b16"))
+        assertTrue(l2.contains("+precise=j0b15"))
     }
 
     @Test

@@ -46,12 +46,11 @@ object BindsWriter {
         "hjump" to "j0b0",     // A: high jump. In the weapon menu: pick
         "ljump" to "j0b1",     // B: long jump. In the weapon menu: close
         "ammomenu" to "j0b3",  // Y: weapon menu
-        // shoulders
+        // shoulders — L2/R2 are NOT here: one physical trigger can be
+        // reported as both an analog axis and a digital button, and binding
+        // both fires the command twice per pull (see axisBinds).
         "+precise" to "j0b9",  // L1: precise aim
         "timer_u" to "j0b10",  // R1: cycle the grenade fuse (with L1: bounciness)
-        // L2/R2 on the pads that report them as digital buttons
-        "+precise" to "j0b15",
-        "+bounce" to "j0b16",  // R2: cycle bounciness on its own
         // start = pause, either thumb click = switch hedgehog
         "pause" to "j0b6",
         "switch" to "j0b7",    // ThumbL click
@@ -66,11 +65,16 @@ object BindsWriter {
         // Right stick: camera.
         axes.rightX?.let { binds += listOf("+cur_r" to "j0a${it}u", "+cur_l" to "j0a${it}d") }
         axes.rightY?.let { binds += listOf("+cur_d" to "j0a${it}u", "+cur_u" to "j0a${it}d") }
-        // Triggers. ONLY their "u" half: SDL normalises Android's 0..1 trigger
-        // range to -1..1, so a RELEASED trigger sits at -32767 and its "d" half
-        // reads as permanently held — anything bound there would fire once and
-        // never let go. "u" trips around 80% pull, which is a deliberate press.
-        axes.rightTrigger?.let { binds += "+bounce" to "j0a${it}u" }
+        // Triggers. Exactly ONE binding per physical trigger: pads that report
+        // a trigger as both an analog axis and a digital button would fire the
+        // command twice per pull (two overlapped presses — the classic way to
+        // strand a held command), so the digital form (SDL buttons 15/16) is
+        // used only when no analog axis exists. And only the axis' "u" half:
+        // SDL normalises Android's 0..1 trigger range to -1..1, so a RELEASED
+        // trigger sits at -32767 and its "d" half reads as permanently held.
+        // "u" trips around 80% pull, which is a deliberate press.
+        binds += axes.leftTrigger?.let { "+precise" to "j0a${it}u" } ?: ("+precise" to "j0b15")
+        binds += axes.rightTrigger?.let { "+bounce" to "j0a${it}u" } ?: ("+bounce" to "j0b16")
         return binds
     }
 
