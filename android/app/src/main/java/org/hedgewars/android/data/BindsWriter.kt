@@ -7,37 +7,67 @@ import java.io.File
  *
  * On MOBILE builds the engine ignores per-team `ebind` commands
  * (uInputHandler.pas SetBinds is desktop-only); the only binding channel is
- * the `[Binds]` section of <user-prefix>/Config/settings.ini, read by
- * loadBinds('dbind', …) from InitDefaultBinds. Key names are raw SDL joystick
- * elements: j<dev>a<axis>u|d, j<dev>h<hat>u|r|d|l, j<dev>b<button>.
+ * the `[Binds]` section of <user-prefix>/settings.ini, read by
+ * loadBinds('dbind', …) from InitDefaultBinds. Key names are SDL controller
+ * elements: j<dev>a<axis>u|d and j<dev>b<button>.
  *
- * SDL2's Android backend exposes the D-pad as hat 0, the left stick as axes
- * 0/1 and A/B/X/Y as buttons 0-3.
+ * The engine reads gamepads through SDL's game controller API, so the
+ * numbering is the SEMANTIC Xbox-style standard — identical on every pad,
+ * mapped by SDL itself (gamecontrollerdb, or built on Android from the
+ * device's reported capabilities):
+ *
+ *   axes:    0=LeftX 1=LeftY 2=RightX 3=RightY 4=LeftTrigger 5=RightTrigger
+ *   buttons: 0=A 1=B 2=X 3=Y 4=Back 5=Guide 6=Start 7=ThumbL 8=ThumbR
+ *            9=L1 10=R1 11..14=DPad up/down/left/right
+ *
+ * The engine names the positive direction of an axis `u` and the negative
+ * one `d`; Android's stick Y axes point DOWN. Triggers report 0..32767 with
+ * rest at 0, so only their `u` half can ever fire (~60% pull) — their `d`
+ * half is dead by construction, no polarity trap anymore.
+ *
+ * One command may be bound to SEVERAL keys (d-pad button + stick axis): the
+ * engine's rebind-displacement is disabled on MOBILE (uInputHandler.pas
+ * addBind). Each KEY must appear at most once.
  */
 object BindsWriter {
 
-    // One physical key per command (the engine unbinds the previous key when
-    // a command is bound again). D-pad is SDL hat 0 on Android (AXIS_HAT_X/Y,
-    // the standard mapping for modern gamepads); button indices follow
-    // SDLControllerManager.getButtonMask: 0=A 1=B 2=X 3=Y 7=Start 8=ThumbL
-    // 9=ThumbR 10=L1 11=R1.
-    private val GAMEPAD_BINDS = linkedMapOf(
+    private val GAMEPAD_BINDS = listOf(
         // D-pad: walk + aim
-        "+left" to "j0h0l",
-        "+right" to "j0h0r",
-        "+up" to "j0h0u",
-        "+down" to "j0h0d",
+        "+up" to "j0b11",
+        "+down" to "j0b12",
+        "+left" to "j0b13",
+        "+right" to "j0b14",
+        // Left stick: same commands as the d-pad
+        "+right" to "j0a0u",
+        "+left" to "j0a0d",
+        "+down" to "j0a1u",
+        "+up" to "j0a1d",
+        // Right stick: camera
+        "+cur_r" to "j0a2u",
+        "+cur_l" to "j0a2d",
+        "+cur_d" to "j0a3u",
+        "+cur_u" to "j0a3d",
         // face buttons
-        "+attack" to "j0b2",   // X: fire (hold for power)
-        "hjump" to "j0b0",     // A: high jump
-        "ljump" to "j0b1",     // B: long jump
+        "+attack" to "j0b2",   // X: fire (hold for power). In the weapon menu: pick
+        "hjump" to "j0b0",     // A: high jump. In the weapon menu: pick
+        "ljump" to "j0b1",     // B: long jump. In the weapon menu: close
         "ammomenu" to "j0b3",  // Y: weapon menu
-        // shoulders: precise aim / weapon timer
-        "+precise" to "j0b10", // L1
-        "timer 3" to "j0b11",  // R1
-        // start = pause, thumb click = switch hedgehog
-        "pause" to "j0b7",
-        "switch" to "j0b9",
+        // Shoulders, as requested by field testers: R side = grenade fuse,
+        // L side = bounciness. Both commands self-guard on non-applicable
+        // weapons. L2 (trigger) holds precise aim.
+        "timer_u" to "j0b10",  // R1: cycle the grenade fuse 1-5 s
+        "timer_u" to "j0a5u",  // R2: same
+        "+bounce" to "j0b9",   // L1: cycle bounciness
+        "+precise" to "j0a4u", // L2 held: precise aim
+        // start = pause, left thumb click = switch hedgehog
+        "pause" to "j0b6",
+        "switch" to "j0b7",    // ThumbL click
+        // Right thumb click confirms the target of aimed weapons (teleport,
+        // homing bee, air strikes…): you aim the crosshair with that very
+        // stick, clicking it places the target. The engine's `put` is a no-op
+        // outside choose-target mode, and in the weapon menu it picks the
+        // highlighted weapon — consistent everywhere, dead key nowhere.
+        "put" to "j0b8",       // ThumbR click
     )
 
     /**

@@ -151,6 +151,35 @@ const
     SDL_CONTROLLERDEVICEADDED = $653;
     SDL_CONTROLLERDEVICEREMOVED = $654;
     SDL_CONTROLLERDEVICEREMAPPED = $655;
+
+    // SDL_GameControllerAxis (SDL_gamecontroller.h): the semantic, per-device
+    // stable axis numbering of the game controller API. Triggers report
+    // 0..32767, resting at 0 — never negative, unlike raw joystick axes.
+    SDL_CONTROLLER_AXIS_LEFTX        = 0;
+    SDL_CONTROLLER_AXIS_LEFTY        = 1;
+    SDL_CONTROLLER_AXIS_RIGHTX       = 2;
+    SDL_CONTROLLER_AXIS_RIGHTY       = 3;
+    SDL_CONTROLLER_AXIS_TRIGGERLEFT  = 4;
+    SDL_CONTROLLER_AXIS_TRIGGERRIGHT = 5;
+    SDL_CONTROLLER_AXIS_MAX          = 6;
+
+    // SDL_GameControllerButton (SDL_gamecontroller.h)
+    SDL_CONTROLLER_BUTTON_A             = 0;
+    SDL_CONTROLLER_BUTTON_B             = 1;
+    SDL_CONTROLLER_BUTTON_X             = 2;
+    SDL_CONTROLLER_BUTTON_Y             = 3;
+    SDL_CONTROLLER_BUTTON_BACK          = 4;
+    SDL_CONTROLLER_BUTTON_GUIDE         = 5;
+    SDL_CONTROLLER_BUTTON_START         = 6;
+    SDL_CONTROLLER_BUTTON_LEFTSTICK     = 7;
+    SDL_CONTROLLER_BUTTON_RIGHTSTICK    = 8;
+    SDL_CONTROLLER_BUTTON_LEFTSHOULDER  = 9;
+    SDL_CONTROLLER_BUTTON_RIGHTSHOULDER = 10;
+    SDL_CONTROLLER_BUTTON_DPAD_UP       = 11;
+    SDL_CONTROLLER_BUTTON_DPAD_DOWN    = 12;
+    SDL_CONTROLLER_BUTTON_DPAD_LEFT    = 13;
+    SDL_CONTROLLER_BUTTON_DPAD_RIGHT   = 14;
+    SDL_CONTROLLER_BUTTON_MAX          = 15;
     SDL_FINGERDOWN        = $700;
     SDL_FINGERUP          = $701;
     SDL_FINGERMOTION      = $702;
@@ -979,6 +1008,11 @@ type
     TSDL_Joystick = record
             end;
 
+    // Opaque handle of the game controller API (semantic Xbox-style layout)
+    PSDL_GameController = ^TSDL_GameController;
+    TSDL_GameController = record
+            end;
+
     {* SDL_TTF *}
     PTTF_Font = ^TTTF_font;
     TTTF_Font = record
@@ -1199,6 +1233,21 @@ function  SDL_JoystickGetBall(joy: PSDL_Joystick; ball: LongInt; dx: PInteger; d
 function  SDL_JoystickGetHat(joy: PSDL_Joystick; hat: LongInt): Byte; cdecl; external SDLLibName;
 function  SDL_JoystickGetButton(joy: PSDL_Joystick; button: LongInt): Byte; cdecl; external SDLLibName;
 procedure SDL_JoystickClose(joy: PSDL_Joystick); cdecl; external SDLLibName;
+function  SDL_JoystickInstanceID(joy: PSDL_Joystick): TSDL_JoystickID; cdecl; external SDLLibName;
+
+// Game controller API. SDL_bool returns are C enums: declare as LongInt
+// (nonzero = true), never as Pascal Boolean.
+function  SDL_IsGameController(idx: LongInt): LongInt; cdecl; external SDLLibName;
+function  SDL_GameControllerNameForIndex(idx: LongInt): PChar; cdecl; external SDLLibName;
+function  SDL_GameControllerOpen(idx: LongInt): PSDL_GameController; cdecl; external SDLLibName;
+function  SDL_GameControllerName(gc: PSDL_GameController): PChar; cdecl; external SDLLibName;
+function  SDL_GameControllerGetAttached(gc: PSDL_GameController): LongInt; cdecl; external SDLLibName;
+function  SDL_GameControllerGetJoystick(gc: PSDL_GameController): PSDL_Joystick; cdecl; external SDLLibName;
+function  SDL_GameControllerEventState(state: LongInt): LongInt; cdecl; external SDLLibName;
+procedure SDL_GameControllerUpdate; cdecl; external SDLLibName;
+function  SDL_GameControllerGetAxis(gc: PSDL_GameController; axis: LongInt): SmallInt; cdecl; external SDLLibName;
+function  SDL_GameControllerGetButton(gc: PSDL_GameController; button: LongInt): Byte; cdecl; external SDLLibName;
+procedure SDL_GameControllerClose(gc: PSDL_GameController); cdecl; external SDLLibName;
 
 {$IFDEF WINDOWS}
 function SDL_putenv(const text: PChar): LongInt; cdecl; external SDLLibName;

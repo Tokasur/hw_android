@@ -205,6 +205,11 @@ class GameActivity : SDLActivity() {
         // Deliver the back button to the engine as the "ac_back" key (bound
         // to the quit-confirmation) instead of finishing the activity.
         android.system.Os.setenv("SDL_ANDROID_TRAP_BACK_BUTTON", "1", true)
+        // Without a physical pad SDL exposes the accelerometer as joystick 0;
+        // the gamepad binds would attach to its axes and a sharp tilt of the
+        // device could walk the hedgehog. Real pads are game controllers now,
+        // the accelerometer never is — drop it entirely.
+        android.system.Os.setenv("SDL_ACCELEROMETER_AS_JOYSTICK", "0", true)
         // Belt-and-suspenders: also hand SDL the orientation hint so its own
         // bookkeeping agrees with the forced request above (SDL_HINT_ORIENTATIONS
         // == "SDL_IOS_ORIENTATIONS", read from the environment by SDL_GetHint).

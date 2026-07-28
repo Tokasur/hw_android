@@ -134,21 +134,28 @@ arrows walk, the crosshair aims, the fire button shoots (hold for power);
 tap your hedgehog or the corner button for the weapon menu; tap to target
 air strikes; dedicated buttons for jumps, weapon timer and pause.
 
-**Gamepad** (defaults, remappable via `settings.ini` `[Binds]`):
+**Gamepad** (standard Xbox-style layout via SDL's game controller API —
+any pad SDL can map gets the exact same bindings; defaults remappable via
+`settings.ini` `[Binds]`):
 
 | Input | Action |
 |---|---|
-| D-pad | walk / aim |
-| X | fire (hold for power) |
-| A / B | high jump / long jump (backflip) |
+| D-pad / left stick | walk / aim |
+| Right stick | move the camera |
+| Right stick click | confirm the target of aimed weapons (teleport, homing bee, air strikes) |
+| X | fire (hold for power) — in the weapon menu: pick |
+| A | high jump — in the weapon menu: pick |
+| B | long jump (backflip) — in the weapon menu: close |
 | Y | weapon menu |
-| L1 | precise aim |
-| R1 | weapon timer (3 s) |
+| While the menu is open | D-pad/left stick browse the weapons |
+| R1 / R2 | cycle the grenade fuse (1–5 s) |
+| L1 | cycle grenade bounciness |
+| L2 (held) | precise aim |
 | Start | pause |
-| Right stick click | switch hedgehog |
+| Left stick click | switch hedgehog |
 
 Connect the controller **before** starting a match (the engine enumerates
-joysticks at startup).
+controllers at startup).
 
 ## Play Store checklist (for a future release)
 

@@ -58,6 +58,7 @@
     <string name="settings_audio">Son et musique</string>
     <string name="settings_sound">Effets sonores</string>
     <string name="settings_music">Musique</string>
+    <string name="settings_menu_music">Musique du menu</string>
     <string name="settings_quality">Qualité graphique</string>
     <string name="settings_quality_low">Qualité réduite (plus rapide)</string>
     <string name="settings_show_fps">Afficher les FPS</string>
@@ -83,5 +84,5 @@
     <!-- Aide contrôles -->
     <string name="controls_title">Contrôles</string>
     <string name="controls_touch">Tactile : faites glisser pour déplacer la caméra, pincez pour zoomer. Utilisez les flèches à l\'écran pour marcher, le viseur pour ajuster l\'angle, le bouton de tir pour tirer (maintenez pour plus de puissance). Touchez votre hérisson ou le bouton dédié pour ouvrir le menu des armes. Touchez une cible pour les frappes aériennes.</string>
-    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, A saut, B salto arrière, X tir, Y menu des armes, Start pause.</string>
+    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, stick droit pour la caméra, A saut, B salto arrière, X tir, Y menu des armes, Start pause. Dans le menu des armes, la croix parcourt, A ou X valide, B ou Y ferme. R1/R2 font défiler le délai des grenades (1-5 s), L1 le rebond. L2 maintenu = visée précise.</string>
 </resources>

@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -15,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import org.hedgewars.android.audio.MenuMusic
 import org.hedgewars.android.engine.EngineOutcome
 import org.hedgewars.android.engine.GameProcessExitInfo
 import org.hedgewars.android.game.GameLauncher
@@ -45,6 +47,19 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // Menu music lives exactly as long as the menus are on screen: launching
+    // a match (GameActivity, ":game" process) or leaving the app stops this
+    // activity — and the music with it.
+    override fun onStart() {
+        super.onStart()
+        MenuMusic.start(this)
+    }
+
+    override fun onStop() {
+        MenuMusic.stop()
+        super.onStop()
+    }
 }
 
 @Composable
@@ -57,6 +72,14 @@ private fun AppNavigation() {
     // on fast devices succeeds on retry); if the budget is spent, the dialog
     // shows — enriched with the system's exit record and native tombstone.
     val context = LocalContext.current
+
+    // AppNavigation only composes once InstallGate is Ready, i.e. once the
+    // game data (including the theme file) is fully installed. On a FRESH
+    // install MainActivity.onStart fires before that point and its
+    // MenuMusic.start finds no file — this one covers that first session.
+    // Later duplicate calls are no-ops.
+    LaunchedEffect(Unit) { MenuMusic.start(context) }
+
     var engineError by remember { mutableStateOf<String?>(null) }
     var crashReport by remember { mutableStateOf<String?>(null) }
     LifecycleResumeEffect(Unit) {

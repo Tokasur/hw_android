@@ -58,6 +58,8 @@ procedure ControllerInit;
 procedure ControllerAxisEvent(joy, axis: Byte; value: Integer);
 procedure ControllerHatEvent(joy, hat, value: Byte);
 procedure ControllerButtonEvent(joy, button: Byte; pressed: Boolean);
+procedure ControllerGCAxisEvent(instanceId: TSDL_JoystickID; axis: Byte; value: Integer);
+procedure ControllerGCButtonEvent(instanceId: TSDL_JoystickID; button: Byte; pressed: Boolean);
 
 implementation
 uses uKeyNames, uConsole, uCommands, uVariables, uConsts, uUtils, uDebug, uPhysFSLayer, uCursor;
@@ -71,6 +73,11 @@ const
     RCTRL  = $4000;
 
 var tkbd: array[0..cKbdMaxIndex] of boolean;
+    // Keys whose PRESS was taken over by the open ammo menu (see ProcessKey).
+    // The matching RELEASE must be taken over too, no matter what the menu
+    // state is by then — re-deciding on release is precisely what strands a
+    // movement or camera key in the "held" state.
+    tAmmoMenuNav: array[0..cKbdMaxIndex] of boolean;
     KeyNames: TKeyNames;
     CurrentBinds: TBinds;
     ControllerNumControllers: Integer;
@@ -188,6 +195,56 @@ for i:= 0 to ModifierCount do
     end;
 end;
 
+// While the ammo menu is up the controller drives the MENU, not the hedgehog.
+// Every in-game bind used to slam the menu shut (they are missing from the
+// allow-list further down in ProcessKey) AND fire its action, so picking a
+// weapon with a gamepad was impossible: a direction walked the hog, jump
+// jumped, and the menu vanished either way.
+type TAmmoMenuAction = (
+    amaPass,     // not ours: normal handling (ammomenu toggle, pause, quit...)
+    amaLeft, amaRight, amaUp, amaDown,
+    amaConfirm,  // equip what the cursor is on
+    amaClose,    // back out without equipping
+    amaIgnore);  // in-game action, meaningless while browsing: eat it
+
+function ammoMenuAction(var curBind: shortstring): TAmmoMenuAction;
+begin
+if curBind = '+left' then ammoMenuAction:= amaLeft
+else if curBind = '+right' then ammoMenuAction:= amaRight
+else if curBind = '+up' then ammoMenuAction:= amaUp
+else if curBind = '+down' then ammoMenuAction:= amaDown
+// Both the fire button and jump confirm: on a gamepad the bottom face button
+// is what everyone presses to validate, and it is bound to a jump in-game.
+else if (curBind = '+attack') or (curBind = 'hjump') then ammoMenuAction:= amaConfirm
+else if curBind = 'ljump' then ammoMenuAction:= amaClose
+// Precise aim, fuse cycling and hedgehog switching all apply to the weapon
+// you are ALREADY holding; firing them from inside the menu is surprising
+// (and used to close it as a side effect).
+else if (curBind = '+precise') or (curBind = 'timer_u') or (curBind = '+bounce')
+     or (curBind = 'switch')
+    then ammoMenuAction:= amaIgnore
+else ammoMenuAction:= amaPass
+end;
+
+// Directions step the weapon cursor one menu cell. The cursor IS the selection
+// here — the menu keeps no highlight index of its own, it hit-tests CursorPoint
+// every frame (uWorld.ShowAmmoMenu) — and MoveCamera re-clamps it to the menu
+// rect every frame, so stepping past an edge simply stops at it.
+procedure navigateAmmoMenu(var curBind: shortstring; Trusted: boolean);
+const step = AMSlotSize + 1; // one cell, same pitch as uWorld's hit test
+begin
+case ammoMenuAction(curBind) of
+    amaLeft:  dec(CursorPoint.X, step);
+    amaRight: inc(CursorPoint.X, step);
+    amaUp:    inc(CursorPoint.Y, step); // CursorPoint.Y grows towards the top
+    amaDown:  dec(CursorPoint.Y, step);
+    // same confirmation path as a mouse click or a touch tap on the weapon
+    amaConfirm: ParseCommand('put', Trusted);
+    amaClose:   bShowAmmoMenu:= false;
+    amaIgnore:  ; // deliberately nothing, and the menu stays up
+end
+end;
+
 procedure ProcessKey(code: LongInt; KeyDown: boolean);
 var
     Trusted: boolean;
@@ -233,6 +290,26 @@ if(KeyDown and (code = SDLK_w)) then
 if CurrentBinds.indices[code] > 0 then
     begin
     curBind:= CurrentBinds.binds[CurrentBinds.indices[code]];
+
+    // While the ammo menu is up, movement/attack drive the menu instead.
+    // Decided on the press and remembered for the release: if the menu opens
+    // or closes while a key is held, the release must still be handled the
+    // way its press was, or the hedgehog walks forever (press walked, release
+    // eaten by the menu) or the camera scrolls forever (press moved the
+    // cursor, release leaked out as movement).
+    if KeyDown then
+        tAmmoMenuNav[code]:= bShowAmmoMenu
+                             and (CurrentTeam <> nil)
+                             and (not CurrentTeam^.ExtDriven)
+                             and (ammoMenuAction(curBind) <> amaPass);
+    if tAmmoMenuNav[code] then
+        begin
+        if KeyDown then
+            navigateAmmoMenu(curBind, Trusted)
+        else
+            tAmmoMenuNav[code]:= false;
+        exit
+        end;
 
     // Check if the keypress should end the ready phase.
     // Camera movement keys are "safe" since its equivalent to moving the mouse,
@@ -545,16 +622,40 @@ begin
 end;
 
 var Controller: array [0..5] of PSDL_Joystick;
+    // Slots opened through the game controller API (semantic Xbox layout;
+    // axis numbers identical on every pad, triggers resting at 0). A slot is
+    // either a game controller OR a raw joystick, never both.
+    GameController: array [0..5] of PSDL_GameController;
+    // event.caxis.which / event.jaxis.which carry the joystick INSTANCE ID —
+    // a monotonic counter, not a device index. Resolved to a slot with these.
+    ControllerInstanceId: array [0..5] of TSDL_JoystickID;
+    ControllerIsGC: array [0..5] of boolean;
+
+function ControllerSlotById(instanceId: TSDL_JoystickID): LongInt;
+var j: LongInt;
+begin
+ControllerSlotById:= -1;
+for j:= 0 to pred(ControllerNumControllers) do
+    if ControllerInstanceId[j] = instanceId then
+        begin
+        ControllerSlotById:= j;
+        exit
+        end
+end;
 
 procedure ControllerInit;
 var j: Integer;
+    joy: PSDL_Joystick;
 begin
 ControllerEnabled:= 0;
 {$IFDEF IPHONEOS}
 exit; // joystick subsystem disabled on iPhone
 {$ENDIF}
 
-SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+// GAMECONTROLLER implies JOYSTICK, and additionally installs the event
+// watcher that turns raw joystick events into semantic controller events —
+// without it SDL_CONTROLLER* events never fire.
+SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 ControllerNumControllers:= SDL_NumJoysticks();
 
 if ControllerNumControllers > 6 then
@@ -566,45 +667,62 @@ if ControllerNumControllers > 0 then
     begin
     for j:= 0 to pred(ControllerNumControllers) do
         begin
-        WriteLnToConsole('Game controller no. ' + IntToStr(j) + ', name "' + shortstring(SDL_JoystickNameForIndex(j)) + '":');
-        Controller[j]:= SDL_JoystickOpen(j);
-        if Controller[j] = nil then
-            WriteLnToConsole('* Failed to open game controller no. ' + IntToStr(j) + '!')
+        Controller[j]:= nil;
+        GameController[j]:= nil;
+        ControllerInstanceId[j]:= -1;
+        ControllerIsGC[j]:= false;
+        if SDL_IsGameController(j) <> 0 then
+            begin
+            // Mapped pad (on Android: any pad with face buttons — SDL builds
+            // the mapping from the device's own capabilities). Fixed layout:
+            // axes 0-5 (LX LY RX RY LT RT), buttons 0-14 (A..DPAD_RIGHT),
+            // no hats. Same key names on every device.
+            WriteLnToConsole('Game controller no. ' + IntToStr(j) + ', name "' + shortstring(SDL_GameControllerNameForIndex(j)) + '":');
+            GameController[j]:= SDL_GameControllerOpen(j);
+            if GameController[j] = nil then
+                WriteLnToConsole('* Failed to open game controller no. ' + IntToStr(j) + '!')
+            else
+                begin
+                joy:= SDL_GameControllerGetJoystick(GameController[j]);
+                if joy <> nil then
+                    ControllerInstanceId[j]:= SDL_JoystickInstanceID(joy);
+                ControllerIsGC[j]:= true;
+                ControllerNumAxes[j]:= SDL_CONTROLLER_AXIS_MAX;      // 6
+                ControllerNumHats[j]:= 0;
+                ControllerNumButtons[j]:= SDL_CONTROLLER_BUTTON_MAX; // 15
+                WriteLnToConsole('* Standard mapping (game controller API)');
+                ControllerEnabled:= 1
+                end
+            end
         else
             begin
-            ControllerNumAxes[j]:= SDL_JoystickNumAxes(Controller[j]);
-            //ControllerNumBalls[j]:= SDL_JoystickNumBalls(Controller[j]);
-            ControllerNumHats[j]:= SDL_JoystickNumHats(Controller[j]);
-            ControllerNumButtons[j]:= SDL_JoystickNumButtons(Controller[j]);
-            WriteLnToConsole('* Number of axes: ' + IntToStr(ControllerNumAxes[j]));
-            //WriteLnToConsole('* Number of balls: ' + IntToStr(ControllerNumBalls[j]));
-            WriteLnToConsole('* Number of hats: ' + IntToStr(ControllerNumHats[j]));
-            WriteLnToConsole('* Number of buttons: ' + IntToStr(ControllerNumButtons[j]));
-            ControllerEnabled:= 1;
-
-            if ControllerNumAxes[j] > 20 then
-                ControllerNumAxes[j]:= 20;
-            //if ControllerNumBalls[j] > 20 then ControllerNumBalls[j]:= 20;
-
-            if ControllerNumHats[j] > 20 then
-                ControllerNumHats[j]:= 20;
-
-            if ControllerNumButtons[j] > 20 then
-                ControllerNumButtons[j]:= 20;
-
-            (*// reset all buttons/axes
-            for i:= 0 to pred(ControllerNumAxes[j]) do
-                ControllerAxes[j][i]:= 0;
-            for i:= 0 to pred(ControllerNumBalls[j]) do
+            // Unmapped device: keep the historical raw-joystick path (useful
+            // on desktop for exotic hardware). On Android this also filters
+            // out the accelerometer pseudo-joystick, which has no mapping —
+            // it used to be opened as controller 0.
+            WriteLnToConsole('Joystick (unmapped) no. ' + IntToStr(j) + ', name "' + shortstring(SDL_JoystickNameForIndex(j)) + '":');
+            Controller[j]:= SDL_JoystickOpen(j);
+            if Controller[j] = nil then
+                WriteLnToConsole('* Failed to open joystick no. ' + IntToStr(j) + '!')
+            else
                 begin
-                ControllerBalls[j][i][0]:= 0;
-                ControllerBalls[j][i][1]:= 0;
-                end;
-            for i:= 0 to pred(ControllerNumHats[j]) do
-                ControllerHats[j][i]:= SDL_HAT_CENTERED;
-            for i:= 0 to pred(ControllerNumButtons[j]) do
-                ControllerButtons[j][i]:= 0;*)
-            end;
+                ControllerInstanceId[j]:= SDL_JoystickInstanceID(Controller[j]);
+                ControllerNumAxes[j]:= SDL_JoystickNumAxes(Controller[j]);
+                ControllerNumHats[j]:= SDL_JoystickNumHats(Controller[j]);
+                ControllerNumButtons[j]:= SDL_JoystickNumButtons(Controller[j]);
+                WriteLnToConsole('* Number of axes: ' + IntToStr(ControllerNumAxes[j]));
+                WriteLnToConsole('* Number of hats: ' + IntToStr(ControllerNumHats[j]));
+                WriteLnToConsole('* Number of buttons: ' + IntToStr(ControllerNumButtons[j]));
+                ControllerEnabled:= 1;
+
+                if ControllerNumAxes[j] > 20 then
+                    ControllerNumAxes[j]:= 20;
+                if ControllerNumHats[j] > 20 then
+                    ControllerNumHats[j]:= 20;
+                if ControllerNumButtons[j] > 20 then
+                    ControllerNumButtons[j]:= 20
+                end
+            end
         end;
     // enable event generation/controller updating
     SDL_JoystickEventState(1);
@@ -613,35 +731,89 @@ else
     WriteLnToConsole('Not using any game controller');
 end;
 
-procedure ControllerAxisEvent(joy, axis: Byte; value: Integer);
-var
-    k: LongInt;
+// Base key-table offset of controller joy's names. Must mirror the layout
+// InitKbdKeyTable builds: per controller, axes*2 then hats*4 then buttons*1
+// names. (The old formula counted buttons twice — harmless only while a
+// single controller existed.)
+function controllerKeyBase(joy: Byte): LongInt;
+var k, i: LongInt;
 begin
     SDL_GetKeyboardState(@k);
-    k:= k + joy * (ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + ControllerNumButtons[joy]*2);
+    for i:= 0 to pred(joy) do
+        k:= k + ControllerNumAxes[i]*2 + ControllerNumHats[i]*4 + ControllerNumButtons[i];
+    controllerKeyBase:= k
+end;
+
+// The raw handlers receive the joystick INSTANCE ID in `joy` (SDL2 event
+// `which`), resolved to our slot like the semantic handlers do. Raw events
+// also arrive for pads opened through the game controller API (SDL derives
+// the semantic events from them); those slots early-return here — handling
+// both streams would run every command twice.
+procedure ControllerAxisEvent(joy, axis: Byte; value: Integer);
+var
+    k, slot: LongInt;
+begin
+    slot:= ControllerSlotById(joy);
+    if (slot < 0) or ControllerIsGC[slot] then
+        exit;
+    k:= controllerKeyBase(slot);
     ProcessKey(k +  axis*2, value > 20000);
     ProcessKey(k + (axis*2)+1, value < -20000);
 end;
 
 procedure ControllerHatEvent(joy, hat, value: Byte);
 var
-    k: LongInt;
+    k, slot: LongInt;
 begin
-    SDL_GetKeyboardState(@k);
-    k:= k + joy * (ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + ControllerNumButtons[joy]*2);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 0, (value and SDL_HAT_UP)   <> 0);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 1, (value and SDL_HAT_RIGHT)<> 0);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 2, (value and SDL_HAT_DOWN) <> 0);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 3, (value and SDL_HAT_LEFT) <> 0);
+    slot:= ControllerSlotById(joy);
+    if (slot < 0) or ControllerIsGC[slot] then
+        exit;
+    k:= controllerKeyBase(slot);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 0, (value and SDL_HAT_UP)   <> 0);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 1, (value and SDL_HAT_RIGHT)<> 0);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 2, (value and SDL_HAT_DOWN) <> 0);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 3, (value and SDL_HAT_LEFT) <> 0);
 end;
 
 procedure ControllerButtonEvent(joy, button: Byte; pressed: Boolean);
 var
-    k: LongInt;
+    k, slot: LongInt;
 begin
-    SDL_GetKeyboardState(@k);
-    k:= k + joy * (ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + ControllerNumButtons[joy]*2);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + button, pressed);
+    slot:= ControllerSlotById(joy);
+    if (slot < 0) or ControllerIsGC[slot] then
+        exit;
+    k:= controllerKeyBase(slot);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + ControllerNumHats[slot]*4 + button, pressed);
+end;
+
+// Semantic events from the game controller API. `which` is the joystick
+// INSTANCE ID (monotonic), resolved to our slot first. Axis values follow
+// the standard layout on every pad; triggers are 0..32767 with rest at 0,
+// so their 'd' key name can never latch — the exact class of bug (camera
+// drifting, permanently-held keys) that raw per-device numbering caused.
+procedure ControllerGCAxisEvent(instanceId: TSDL_JoystickID; axis: Byte; value: Integer);
+var
+    joy, k: LongInt;
+begin
+    joy:= ControllerSlotById(instanceId);
+    if (joy < 0) or (not ControllerIsGC[joy]) then
+        exit;
+    k:= controllerKeyBase(joy);
+    ProcessKey(k +  axis*2, value > 20000);
+    ProcessKey(k + (axis*2)+1, value < -20000);
+end;
+
+procedure ControllerGCButtonEvent(instanceId: TSDL_JoystickID; button: Byte; pressed: Boolean);
+var
+    joy, k: LongInt;
+begin
+    joy:= ControllerSlotById(instanceId);
+    if (joy < 0) or (not ControllerIsGC[joy]) then
+        exit;
+    if button >= ControllerNumButtons[joy] then
+        exit; // MISC1/paddles/touchpad: beyond our key table
+    k:= controllerKeyBase(joy);
+    ProcessKey(k +  ControllerNumAxes[joy]*2 + button, pressed);
 end;
 
 procedure loadBinds(cmd, s: shortstring);
@@ -736,6 +908,7 @@ begin
         while (i <= High(binds.binds)) and (binds.binds[i] <> KeyName) do
             inc(i);
 
+{$IFNDEF MOBILE}
         if (i <= High(binds.binds)) then
         begin
             code:= Low(binds.indices);
@@ -747,6 +920,15 @@ begin
             binds.indices[code]:= 0;
             binds.binds[i]:= ''
         end;
+{$ELSE}
+        // On MOBILE the displacement above is skipped: there is no rebinding
+        // UI — the frontend regenerates settings.ini wholesale on every launch
+        // and each match runs in a pristine engine process, so the dedup would
+        // only forbid what the frontend deliberately writes: one command on
+        // several physical inputs (d-pad button AND stick axis AND keyboard).
+        // When the scan found the command's existing slot, the new key simply
+        // joins it (newCode := i below); the previous key stays bound.
+{$ENDIF}
 
         if binds.indices[b] > 0 then
             newCode:= binds.indices[b]
@@ -785,7 +967,10 @@ begin
     // close gamepad controllers
     if ControllerEnabled > 0 then
         for j:= 0 to pred(ControllerNumControllers) do
-            SDL_JoystickClose(Controller[j]);
+            if GameController[j] <> nil then
+                SDL_GameControllerClose(GameController[j])
+            else if Controller[j] <> nil then
+                SDL_JoystickClose(Controller[j]);
 end;
 
 end.

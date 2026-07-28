@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import org.hedgewars.android.R
+import org.hedgewars.android.audio.MenuMusic
 import org.hedgewars.android.data.UserPrefs
 import org.hedgewars.android.ui.common.DropdownPicker
 
@@ -33,6 +34,7 @@ fun SettingsScreen(nav: NavController) {
 
     var sound by remember { mutableStateOf(prefs.sound) }
     var music by remember { mutableStateOf(prefs.music) }
+    var menuMusic by remember { mutableStateOf(prefs.menuMusic) }
     var lowQuality by remember { mutableStateOf(prefs.lowQuality) }
     var showFps by remember { mutableStateOf(prefs.showFps) }
     var gamepad by remember { mutableStateOf(prefs.gamepadBinds) }
@@ -59,6 +61,10 @@ fun SettingsScreen(nav: NavController) {
         Text(stringResource(R.string.settings_audio), style = MaterialTheme.typography.titleMedium)
         ToggleRow(stringResource(R.string.settings_sound), sound) { sound = it; prefs.sound = it }
         ToggleRow(stringResource(R.string.settings_music), music) { music = it; prefs.music = it }
+        ToggleRow(stringResource(R.string.settings_menu_music), menuMusic) {
+            menuMusic = it; prefs.menuMusic = it
+            if (it) MenuMusic.start(context) else MenuMusic.stop()
+        }
 
         Text(stringResource(R.string.settings_quality), style = MaterialTheme.typography.titleMedium)
         ToggleRow(stringResource(R.string.settings_quality_low), lowQuality) {

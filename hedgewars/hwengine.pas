@@ -286,6 +286,17 @@ game to freeze if one online player minimizes Hedgewars. *)
                     end;
 {$ENDIF}
 
+                // Mapped pads (game controller API): semantic events, same
+                // axis/button numbering on every device. The raw SDL_JOY*
+                // handlers below early-return for these pads — both streams
+                // arrive, SDL derives one from the other.
+                SDL_CONTROLLERAXISMOTION:
+                    ControllerGCAxisEvent(event.caxis.which, event.caxis.axis, event.caxis.value);
+                SDL_CONTROLLERBUTTONDOWN:
+                    ControllerGCButtonEvent(event.cbutton.which, event.cbutton.button, true);
+                SDL_CONTROLLERBUTTONUP:
+                    ControllerGCButtonEvent(event.cbutton.which, event.cbutton.button, false);
+                // Unmapped devices: historical raw-joystick path
                 SDL_JOYAXISMOTION:
                     ControllerAxisEvent(event.jaxis.which, event.jaxis.axis, event.jaxis.value);
                 SDL_JOYHATMOTION:

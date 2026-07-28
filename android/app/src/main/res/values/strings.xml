@@ -60,6 +60,7 @@
     <string name="settings_audio">Sound &amp; music</string>
     <string name="settings_sound">Sound effects</string>
     <string name="settings_music">Music</string>
+    <string name="settings_menu_music">Menu music</string>
     <string name="settings_quality">Graphics quality</string>
     <string name="settings_quality_low">Reduced quality (faster)</string>
     <string name="settings_show_fps">Show FPS</string>
@@ -85,7 +86,7 @@
     <!-- Controls help -->
     <string name="controls_title">Controls</string>
     <string name="controls_touch">Touch: drag to scroll, pinch to zoom. Use the on-screen arrows to walk, the aim widget to aim, the fire button to shoot (hold for more power). Tap your hedgehog or the corner button to open the weapon menu. Tap a target for air strikes.</string>
-    <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, A jump, B backflip, X fire, Y weapon menu, Start pause.</string>
+    <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, right stick moves the camera, A jump, B backflip, X fire, Y weapon menu, Start pause. In the weapon menu, the D-pad browses, A or X picks, B or Y closes. R1/R2 cycle the grenade fuse (1-5 s), L1 cycles bounciness. Hold L2 to aim precisely.</string>
     <!-- Engine crash handling -->
     <string name="engine_crash_retry">The game crashed at start — retrying…</string>
 </resources>
