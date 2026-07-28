@@ -58,6 +58,8 @@ procedure ControllerInit;
 procedure ControllerAxisEvent(joy, axis: Byte; value: Integer);
 procedure ControllerHatEvent(joy, hat, value: Byte);
 procedure ControllerButtonEvent(joy, button: Byte; pressed: Boolean);
+procedure ControllerGCAxisEvent(instanceId: TSDL_JoystickID; axis: Byte; value: Integer);
+procedure ControllerGCButtonEvent(instanceId: TSDL_JoystickID; button: Byte; pressed: Boolean);
 
 implementation
 uses uKeyNames, uConsole, uCommands, uVariables, uConsts, uUtils, uDebug, uPhysFSLayer, uCursor;
@@ -620,16 +622,40 @@ begin
 end;
 
 var Controller: array [0..5] of PSDL_Joystick;
+    // Slots opened through the game controller API (semantic Xbox layout;
+    // axis numbers identical on every pad, triggers resting at 0). A slot is
+    // either a game controller OR a raw joystick, never both.
+    GameController: array [0..5] of PSDL_GameController;
+    // event.caxis.which / event.jaxis.which carry the joystick INSTANCE ID —
+    // a monotonic counter, not a device index. Resolved to a slot with these.
+    ControllerInstanceId: array [0..5] of TSDL_JoystickID;
+    ControllerIsGC: array [0..5] of boolean;
+
+function ControllerSlotById(instanceId: TSDL_JoystickID): LongInt;
+var j: LongInt;
+begin
+ControllerSlotById:= -1;
+for j:= 0 to pred(ControllerNumControllers) do
+    if ControllerInstanceId[j] = instanceId then
+        begin
+        ControllerSlotById:= j;
+        exit
+        end
+end;
 
 procedure ControllerInit;
 var j: Integer;
+    joy: PSDL_Joystick;
 begin
 ControllerEnabled:= 0;
 {$IFDEF IPHONEOS}
 exit; // joystick subsystem disabled on iPhone
 {$ENDIF}
 
-SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+// GAMECONTROLLER implies JOYSTICK, and additionally installs the event
+// watcher that turns raw joystick events into semantic controller events —
+// without it SDL_CONTROLLER* events never fire.
+SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 ControllerNumControllers:= SDL_NumJoysticks();
 
 if ControllerNumControllers > 6 then
@@ -641,45 +667,62 @@ if ControllerNumControllers > 0 then
     begin
     for j:= 0 to pred(ControllerNumControllers) do
         begin
-        WriteLnToConsole('Game controller no. ' + IntToStr(j) + ', name "' + shortstring(SDL_JoystickNameForIndex(j)) + '":');
-        Controller[j]:= SDL_JoystickOpen(j);
-        if Controller[j] = nil then
-            WriteLnToConsole('* Failed to open game controller no. ' + IntToStr(j) + '!')
+        Controller[j]:= nil;
+        GameController[j]:= nil;
+        ControllerInstanceId[j]:= -1;
+        ControllerIsGC[j]:= false;
+        if SDL_IsGameController(j) <> 0 then
+            begin
+            // Mapped pad (on Android: any pad with face buttons — SDL builds
+            // the mapping from the device's own capabilities). Fixed layout:
+            // axes 0-5 (LX LY RX RY LT RT), buttons 0-14 (A..DPAD_RIGHT),
+            // no hats. Same key names on every device.
+            WriteLnToConsole('Game controller no. ' + IntToStr(j) + ', name "' + shortstring(SDL_GameControllerNameForIndex(j)) + '":');
+            GameController[j]:= SDL_GameControllerOpen(j);
+            if GameController[j] = nil then
+                WriteLnToConsole('* Failed to open game controller no. ' + IntToStr(j) + '!')
+            else
+                begin
+                joy:= SDL_GameControllerGetJoystick(GameController[j]);
+                if joy <> nil then
+                    ControllerInstanceId[j]:= SDL_JoystickInstanceID(joy);
+                ControllerIsGC[j]:= true;
+                ControllerNumAxes[j]:= SDL_CONTROLLER_AXIS_MAX;      // 6
+                ControllerNumHats[j]:= 0;
+                ControllerNumButtons[j]:= SDL_CONTROLLER_BUTTON_MAX; // 15
+                WriteLnToConsole('* Standard mapping (game controller API)');
+                ControllerEnabled:= 1
+                end
+            end
         else
             begin
-            ControllerNumAxes[j]:= SDL_JoystickNumAxes(Controller[j]);
-            //ControllerNumBalls[j]:= SDL_JoystickNumBalls(Controller[j]);
-            ControllerNumHats[j]:= SDL_JoystickNumHats(Controller[j]);
-            ControllerNumButtons[j]:= SDL_JoystickNumButtons(Controller[j]);
-            WriteLnToConsole('* Number of axes: ' + IntToStr(ControllerNumAxes[j]));
-            //WriteLnToConsole('* Number of balls: ' + IntToStr(ControllerNumBalls[j]));
-            WriteLnToConsole('* Number of hats: ' + IntToStr(ControllerNumHats[j]));
-            WriteLnToConsole('* Number of buttons: ' + IntToStr(ControllerNumButtons[j]));
-            ControllerEnabled:= 1;
-
-            if ControllerNumAxes[j] > 20 then
-                ControllerNumAxes[j]:= 20;
-            //if ControllerNumBalls[j] > 20 then ControllerNumBalls[j]:= 20;
-
-            if ControllerNumHats[j] > 20 then
-                ControllerNumHats[j]:= 20;
-
-            if ControllerNumButtons[j] > 20 then
-                ControllerNumButtons[j]:= 20;
-
-            (*// reset all buttons/axes
-            for i:= 0 to pred(ControllerNumAxes[j]) do
-                ControllerAxes[j][i]:= 0;
-            for i:= 0 to pred(ControllerNumBalls[j]) do
+            // Unmapped device: keep the historical raw-joystick path (useful
+            // on desktop for exotic hardware). On Android this also filters
+            // out the accelerometer pseudo-joystick, which has no mapping —
+            // it used to be opened as controller 0.
+            WriteLnToConsole('Joystick (unmapped) no. ' + IntToStr(j) + ', name "' + shortstring(SDL_JoystickNameForIndex(j)) + '":');
+            Controller[j]:= SDL_JoystickOpen(j);
+            if Controller[j] = nil then
+                WriteLnToConsole('* Failed to open joystick no. ' + IntToStr(j) + '!')
+            else
                 begin
-                ControllerBalls[j][i][0]:= 0;
-                ControllerBalls[j][i][1]:= 0;
-                end;
-            for i:= 0 to pred(ControllerNumHats[j]) do
-                ControllerHats[j][i]:= SDL_HAT_CENTERED;
-            for i:= 0 to pred(ControllerNumButtons[j]) do
-                ControllerButtons[j][i]:= 0;*)
-            end;
+                ControllerInstanceId[j]:= SDL_JoystickInstanceID(Controller[j]);
+                ControllerNumAxes[j]:= SDL_JoystickNumAxes(Controller[j]);
+                ControllerNumHats[j]:= SDL_JoystickNumHats(Controller[j]);
+                ControllerNumButtons[j]:= SDL_JoystickNumButtons(Controller[j]);
+                WriteLnToConsole('* Number of axes: ' + IntToStr(ControllerNumAxes[j]));
+                WriteLnToConsole('* Number of hats: ' + IntToStr(ControllerNumHats[j]));
+                WriteLnToConsole('* Number of buttons: ' + IntToStr(ControllerNumButtons[j]));
+                ControllerEnabled:= 1;
+
+                if ControllerNumAxes[j] > 20 then
+                    ControllerNumAxes[j]:= 20;
+                if ControllerNumHats[j] > 20 then
+                    ControllerNumHats[j]:= 20;
+                if ControllerNumButtons[j] > 20 then
+                    ControllerNumButtons[j]:= 20
+                end
+            end
         end;
     // enable event generation/controller updating
     SDL_JoystickEventState(1);
@@ -688,35 +731,89 @@ else
     WriteLnToConsole('Not using any game controller');
 end;
 
-procedure ControllerAxisEvent(joy, axis: Byte; value: Integer);
-var
-    k: LongInt;
+// Base key-table offset of controller joy's names. Must mirror the layout
+// InitKbdKeyTable builds: per controller, axes*2 then hats*4 then buttons*1
+// names. (The old formula counted buttons twice — harmless only while a
+// single controller existed.)
+function controllerKeyBase(joy: Byte): LongInt;
+var k, i: LongInt;
 begin
     SDL_GetKeyboardState(@k);
-    k:= k + joy * (ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + ControllerNumButtons[joy]*2);
+    for i:= 0 to pred(joy) do
+        k:= k + ControllerNumAxes[i]*2 + ControllerNumHats[i]*4 + ControllerNumButtons[i];
+    controllerKeyBase:= k
+end;
+
+// The raw handlers receive the joystick INSTANCE ID in `joy` (SDL2 event
+// `which`), resolved to our slot like the semantic handlers do. Raw events
+// also arrive for pads opened through the game controller API (SDL derives
+// the semantic events from them); those slots early-return here — handling
+// both streams would run every command twice.
+procedure ControllerAxisEvent(joy, axis: Byte; value: Integer);
+var
+    k, slot: LongInt;
+begin
+    slot:= ControllerSlotById(joy);
+    if (slot < 0) or ControllerIsGC[slot] then
+        exit;
+    k:= controllerKeyBase(slot);
     ProcessKey(k +  axis*2, value > 20000);
     ProcessKey(k + (axis*2)+1, value < -20000);
 end;
 
 procedure ControllerHatEvent(joy, hat, value: Byte);
 var
-    k: LongInt;
+    k, slot: LongInt;
 begin
-    SDL_GetKeyboardState(@k);
-    k:= k + joy * (ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + ControllerNumButtons[joy]*2);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 0, (value and SDL_HAT_UP)   <> 0);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 1, (value and SDL_HAT_RIGHT)<> 0);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 2, (value and SDL_HAT_DOWN) <> 0);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + hat*4 + 3, (value and SDL_HAT_LEFT) <> 0);
+    slot:= ControllerSlotById(joy);
+    if (slot < 0) or ControllerIsGC[slot] then
+        exit;
+    k:= controllerKeyBase(slot);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 0, (value and SDL_HAT_UP)   <> 0);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 1, (value and SDL_HAT_RIGHT)<> 0);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 2, (value and SDL_HAT_DOWN) <> 0);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + hat*4 + 3, (value and SDL_HAT_LEFT) <> 0);
 end;
 
 procedure ControllerButtonEvent(joy, button: Byte; pressed: Boolean);
 var
-    k: LongInt;
+    k, slot: LongInt;
 begin
-    SDL_GetKeyboardState(@k);
-    k:= k + joy * (ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + ControllerNumButtons[joy]*2);
-    ProcessKey(k +  ControllerNumAxes[joy]*2 + ControllerNumHats[joy]*4 + button, pressed);
+    slot:= ControllerSlotById(joy);
+    if (slot < 0) or ControllerIsGC[slot] then
+        exit;
+    k:= controllerKeyBase(slot);
+    ProcessKey(k +  ControllerNumAxes[slot]*2 + ControllerNumHats[slot]*4 + button, pressed);
+end;
+
+// Semantic events from the game controller API. `which` is the joystick
+// INSTANCE ID (monotonic), resolved to our slot first. Axis values follow
+// the standard layout on every pad; triggers are 0..32767 with rest at 0,
+// so their 'd' key name can never latch — the exact class of bug (camera
+// drifting, permanently-held keys) that raw per-device numbering caused.
+procedure ControllerGCAxisEvent(instanceId: TSDL_JoystickID; axis: Byte; value: Integer);
+var
+    joy, k: LongInt;
+begin
+    joy:= ControllerSlotById(instanceId);
+    if (joy < 0) or (not ControllerIsGC[joy]) then
+        exit;
+    k:= controllerKeyBase(joy);
+    ProcessKey(k +  axis*2, value > 20000);
+    ProcessKey(k + (axis*2)+1, value < -20000);
+end;
+
+procedure ControllerGCButtonEvent(instanceId: TSDL_JoystickID; button: Byte; pressed: Boolean);
+var
+    joy, k: LongInt;
+begin
+    joy:= ControllerSlotById(instanceId);
+    if (joy < 0) or (not ControllerIsGC[joy]) then
+        exit;
+    if button >= ControllerNumButtons[joy] then
+        exit; // MISC1/paddles/touchpad: beyond our key table
+    k:= controllerKeyBase(joy);
+    ProcessKey(k +  ControllerNumAxes[joy]*2 + button, pressed);
 end;
 
 procedure loadBinds(cmd, s: shortstring);
@@ -870,7 +967,10 @@ begin
     // close gamepad controllers
     if ControllerEnabled > 0 then
         for j:= 0 to pred(ControllerNumControllers) do
-            SDL_JoystickClose(Controller[j]);
+            if GameController[j] <> nil then
+                SDL_GameControllerClose(GameController[j])
+            else if Controller[j] <> nil then
+                SDL_JoystickClose(Controller[j]);
 end;
 
 end.
