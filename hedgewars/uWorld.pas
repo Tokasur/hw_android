@@ -379,10 +379,13 @@ with pauseButton do
     sprite:= sprPauseButton;
     frame.w:= Round(spritesData[sprPauseButton].Texture^.w * buttonScale);
     frame.h:= Round(spritesData[sprPauseButton].Texture^.h * buttonScale);
-    // Inset from the exact corner: phone displays clip the corner pixels
-    // (rounded glass / camera cutout), which left this button half-hidden.
-    frame.x:= cScreenWidth div 2 - frame.w - 16;
-    frame.y:= 10;
+    // Flush against the top-right corner: a floating inset looked detached
+    // on square handheld screens (field feedback). The sprite's own artwork
+    // keeps the pause glyph away from the extreme corner pixels, which is
+    // enough for rounded phone glass; if some device truly clips it, come
+    // back with real window insets rather than a blind margin.
+    frame.x:= cScreenWidth div 2 - frame.w;
+    frame.y:= 0;
     SetActiveWithPadding(pauseButton);
     end;
 

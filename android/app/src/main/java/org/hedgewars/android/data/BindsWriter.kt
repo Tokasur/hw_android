@@ -59,10 +59,15 @@ object BindsWriter {
         "timer_u" to "j0a5u",  // R2: same
         "+bounce" to "j0b9",   // L1: cycle bounciness
         "+precise" to "j0a4u", // L2 held: precise aim
-        // start = pause, either thumb click = switch hedgehog
+        // start = pause, left thumb click = switch hedgehog
         "pause" to "j0b6",
         "switch" to "j0b7",    // ThumbL click
-        "switch" to "j0b8",    // ThumbR click
+        // Right thumb click confirms the target of aimed weapons (teleport,
+        // homing bee, air strikes…): you aim the crosshair with that very
+        // stick, clicking it places the target. The engine's `put` is a no-op
+        // outside choose-target mode, and in the weapon menu it picks the
+        // highlighted weapon — consistent everywhere, dead key nowhere.
+        "put" to "j0b8",       // ThumbR click
     )
 
     /**

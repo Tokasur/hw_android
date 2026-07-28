@@ -83,6 +83,13 @@ class BindsWriterTest {
     }
 
     @Test
+    fun `right thumb click confirms weapon targets`() {
+        // Aim with the right stick, click it to place the target (teleport,
+        // homing bee…) — without this, targets could only be tapped on screen.
+        assertTrue(writeTo(true).contains("put=j0b8"))
+    }
+
+    @Test
     fun `section header comes before entries`() {
         val lines = writeTo(true)
         val header = lines.indexOf("[Binds]")
