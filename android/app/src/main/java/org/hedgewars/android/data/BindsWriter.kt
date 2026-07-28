@@ -7,21 +7,23 @@ import java.io.File
  *
  * On MOBILE builds the engine ignores per-team `ebind` commands
  * (uInputHandler.pas SetBinds is desktop-only); the only binding channel is
- * the `[Binds]` section of <user-prefix>/Config/settings.ini, read by
- * loadBinds('dbind', …) from InitDefaultBinds. Key names are raw SDL joystick
+ * the `[Binds]` section of <user-prefix>/settings.ini, read by
+ * loadBinds('dbind', …) from InitDefaultBinds. Key names are SDL controller
  * elements: j<dev>a<axis>u|d and j<dev>b<button>.
  *
- * Buttons are fixed by SDL's Android backend (SDL_sysjoystick.c keycode_to_SDL):
- * 0=A 1=B 2=X 3=Y 6=Start/Menu 7=ThumbL 8=ThumbR 9=L1 10=R1 11=DpadUp
- * 12=DpadDown 13=DpadLeft 14=DpadRight 15=L2 16=R2. The D-PAD IS BUTTONS —
- * never a hat: the backend converts both d-pad KeyEvents and AXIS_HAT motion
- * into DPAD button presses and forces nhats=0, so j<dev>h* names do not exist.
+ * The engine reads gamepads through SDL's game controller API, so the
+ * numbering is the SEMANTIC Xbox-style standard — identical on every pad,
+ * mapped by SDL itself (gamecontrollerdb, or built on Android from the
+ * device's reported capabilities):
  *
- * Axis NUMBERS, on the other hand, depend on which axes the pad reports, so
- * they are measured per device ([GamepadLayout]) instead of assumed. The
- * engine names the positive direction of an axis `u` and the negative one `d`
- * (uInputHandler.pas ControllerAxisEvent, ±20000 deadzone), and Android's Y
- * axes point DOWN.
+ *   axes:    0=LeftX 1=LeftY 2=RightX 3=RightY 4=LeftTrigger 5=RightTrigger
+ *   buttons: 0=A 1=B 2=X 3=Y 4=Back 5=Guide 6=Start 7=ThumbL 8=ThumbR
+ *            9=L1 10=R1 11..14=DPad up/down/left/right
+ *
+ * The engine names the positive direction of an axis `u` and the negative
+ * one `d`; Android's stick Y axes point DOWN. Triggers report 0..32767 with
+ * rest at 0, so only their `u` half can ever fire (~60% pull) — their `d`
+ * half is dead by construction, no polarity trap anymore.
  *
  * One command may be bound to SEVERAL keys (d-pad button + stick axis): the
  * engine's rebind-displacement is disabled on MOBILE (uInputHandler.pas
@@ -29,63 +31,45 @@ import java.io.File
  */
 object BindsWriter {
 
-    /** Fallback axis numbering for the common Xbox-shaped pad. */
-    private val ASSUMED_AXES = GamepadLayout.Axes(
-        leftX = 0, leftY = 1, rightX = 2, rightY = 3,
-        leftTrigger = 4, rightTrigger = 5,
-    )
-
-    private val BUTTON_BINDS = listOf(
-        // D-pad (SDL buttons 11-14): walk + aim
+    private val GAMEPAD_BINDS = listOf(
+        // D-pad: walk + aim
         "+up" to "j0b11",
         "+down" to "j0b12",
         "+left" to "j0b13",
         "+right" to "j0b14",
+        // Left stick: same commands as the d-pad
+        "+right" to "j0a0u",
+        "+left" to "j0a0d",
+        "+down" to "j0a1u",
+        "+up" to "j0a1d",
+        // Right stick: camera
+        "+cur_r" to "j0a2u",
+        "+cur_l" to "j0a2d",
+        "+cur_d" to "j0a3u",
+        "+cur_u" to "j0a3d",
         // face buttons
         "+attack" to "j0b2",   // X: fire (hold for power). In the weapon menu: pick
         "hjump" to "j0b0",     // A: high jump. In the weapon menu: pick
         "ljump" to "j0b1",     // B: long jump. In the weapon menu: close
         "ammomenu" to "j0b3",  // Y: weapon menu
-        // shoulders — L2/R2 are NOT here: one physical trigger can be
-        // reported as both an analog axis and a digital button, and binding
-        // both fires the command twice per pull (see axisBinds).
-        "+precise" to "j0b9",  // L1: precise aim
-        "timer_u" to "j0b10",  // R1: cycle the grenade fuse (with L1: bounciness)
+        // Shoulders, as requested by field testers: R side = grenade fuse,
+        // L side = bounciness. Both commands self-guard on non-applicable
+        // weapons. L2 (trigger) holds precise aim.
+        "timer_u" to "j0b10",  // R1: cycle the grenade fuse 1-5 s
+        "timer_u" to "j0a5u",  // R2: same
+        "+bounce" to "j0b9",   // L1: cycle bounciness
+        "+precise" to "j0a4u", // L2 held: precise aim
         // start = pause, either thumb click = switch hedgehog
         "pause" to "j0b6",
         "switch" to "j0b7",    // ThumbL click
         "switch" to "j0b8",    // ThumbR click
     )
 
-    private fun axisBinds(axes: GamepadLayout.Axes): List<Pair<String, String>> {
-        val binds = mutableListOf<Pair<String, String>>()
-        // Left stick: walk + aim, the same commands as the d-pad.
-        axes.leftX?.let { binds += listOf("+right" to "j0a${it}u", "+left" to "j0a${it}d") }
-        axes.leftY?.let { binds += listOf("+down" to "j0a${it}u", "+up" to "j0a${it}d") }
-        // Right stick: camera.
-        axes.rightX?.let { binds += listOf("+cur_r" to "j0a${it}u", "+cur_l" to "j0a${it}d") }
-        axes.rightY?.let { binds += listOf("+cur_d" to "j0a${it}u", "+cur_u" to "j0a${it}d") }
-        // Triggers. Exactly ONE binding per physical trigger: pads that report
-        // a trigger as both an analog axis and a digital button would fire the
-        // command twice per pull (two overlapped presses — the classic way to
-        // strand a held command), so the digital form (SDL buttons 15/16) is
-        // used only when no analog axis exists. And only the axis' "u" half:
-        // SDL normalises Android's 0..1 trigger range to -1..1, so a RELEASED
-        // trigger sits at -32767 and its "d" half reads as permanently held.
-        // "u" trips around 80% pull, which is a deliberate press.
-        binds += axes.leftTrigger?.let { "+precise" to "j0a${it}u" } ?: ("+precise" to "j0b15")
-        binds += axes.rightTrigger?.let { "+bounce" to "j0a${it}u" } ?: ("+bounce" to "j0b16")
-        return binds
-    }
-
     /**
      * (Re)writes settings.ini with the [Binds] section, preserving nothing:
-     * the file is fully owned by the frontend on this platform. [axes] comes
-     * from the connected pad; without one the conventional numbering is
-     * written, which costs nothing since the engine skips key names that do
-     * not exist.
+     * the file is fully owned by the frontend on this platform.
      */
-    fun write(settingsIni: File, gamepadEnabled: Boolean, axes: GamepadLayout.Axes? = null) {
+    fun write(settingsIni: File, gamepadEnabled: Boolean) {
         settingsIni.parentFile?.mkdirs()
         val sb = StringBuilder()
         sb.append("; generated by the Hedgewars Android frontend\n")
@@ -96,7 +80,7 @@ object BindsWriter {
         if (gamepadEnabled) {
             // loadBinds parses "<command>=<keyname>" and turns it into
             // "dbind <keyname> <command>" (uInputHandler.pas loadBinds/addBind)
-            for ((command, key) in BUTTON_BINDS + axisBinds(axes ?: ASSUMED_AXES)) {
+            for ((command, key) in GAMEPAD_BINDS) {
                 sb.append(command).append('=').append(key).append('\n')
             }
         }
