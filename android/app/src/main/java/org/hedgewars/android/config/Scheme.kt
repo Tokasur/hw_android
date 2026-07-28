@@ -92,23 +92,109 @@ data class Scheme(
     companion object {
         val DEFAULT = Scheme(name = "Default")
 
+        /**
+         * The 16 desktop presets in model order (QTfrontend/model/
+         * gameSchemeModel.cpp), plus the Android-only "Sudden Death" last.
+         */
         val PRESETS = listOf(
             DEFAULT,
             Scheme(
                 name = "Pro Mode",
-                sharedAmmo = true, turnTimeSec = 15, caseFreq = 0,
+                sharedAmmo = true, turnTimeSec = 15, caseFreq = 0, minesNum = 0,
             ),
             Scheme(
-                name = "Sudden Death",
-                initHealth = 50, suddenDeathTurns = 8, waterRise = 100,
+                name = "Shoppa",
+                solidLand = true, border = true, sharedAmmo = true,
+                disableGirders = true, disableLandObjects = true, resetWeapons = true,
+                turnTimeSec = 30, suddenDeathTurns = 50, caseFreq = 1,
+                minesTimeSec = 0, minesNum = 0, explosives = 0,
+                healthCaseProb = 0, waterRise = 0, healthDecrease = 0,
+            ),
+            Scheme(
+                name = "Clean Slate",
+                resetHealth = true, infiniteAttacks = true, resetWeapons = true,
+            ),
+            Scheme(
+                name = "Minefield",
+                sharedAmmo = true, disableGirders = true,
+                turnTimeSec = 30, initHealth = 50, caseFreq = 0,
+                minesTimeSec = 0, minesNum = 200, explosives = 0,
             ),
             Scheme(
                 name = "Barrel Mayhem",
-                sharedAmmo = true, explosives = 80, caseFreq = 0,
+                sharedAmmo = true,
+                turnTimeSec = 30, caseFreq = 0, minesTimeSec = 0, minesNum = 0,
+                explosives = 200,
+            ),
+            Scheme(
+                name = "Tunnel Hogs",
+                border = true, sharedAmmo = true,
+                disableGirders = true, disableLandObjects = true,
+                turnTimeSec = 30, minesNum = 10, mineDudPercent = 10,
+                explosives = 10, airMines = 4,
+            ),
+            Scheme(
+                name = "Timeless",
+                perHogAmmo = true,
+                turnTimeSec = 9999, minesNum = 5, mineDudPercent = 10,
+                healthCaseAmount = 30, waterRise = 0, healthDecrease = 0,
+            ),
+            Scheme(
+                name = "Thinking with Portals",
+                artillery = true,
+                caseFreq = 2, minesNum = 5, explosives = 5, airMines = 4,
+                healthCaseProb = 25,
             ),
             Scheme(
                 name = "King Mode",
                 king = true,
+            ),
+            Scheme(
+                name = "Mutant",
+                resetWeapons = true,
+                turnTimeSec = 20, caseFreq = 2, minesTimeSec = 1,
+                healthCaseProb = 0, waterRise = 0, healthDecrease = 0,
+            ),
+            Scheme(
+                name = "Construction Mode",
+                disableGirders = true, disableLandObjects = true,
+                infiniteAttacks = true, perHogAmmo = true,
+                minesNum = 0, explosives = 0,
+                scriptParam = "initialenergy=550, energyperround=50, maxenergy=1000, cratesperround=5",
+            ),
+            Scheme(
+                name = "The Specialists",
+                switchHog = true, randomOrder = false, placeHogs = true,
+                infiniteAttacks = true, resetWeapons = true, perHogAmmo = true,
+                minesNum = 0, explosives = 0, healthCaseProb = 100,
+                scriptParam = "t=SENDXHPL",
+            ),
+            Scheme(
+                name = "Space Invasion",
+                disableGirders = true,
+                suddenDeathTurns = 50, caseFreq = 0, minesNum = 0, explosives = 0,
+                healthCaseProb = 0, waterRise = 0, healthDecrease = 0,
+                scriptParam = "rounds=3, shield=30, barrels=5, pings=2, " +
+                    "barrelbonus=3, shieldbonus=30, timebonus=4",
+            ),
+            Scheme(
+                name = "HedgeEditor",
+                randomOrder = false, perHogAmmo = true,
+                turnTimeSec = 9999, suddenDeathTurns = 50, caseFreq = 0,
+                minesNum = 0, explosives = 0, waterRise = 0, healthDecrease = 0,
+            ),
+            Scheme(
+                name = "Racer",
+                solidLand = true, border = true, invulnerable = true,
+                sharedAmmo = true, disableGirders = true, disableLandObjects = true,
+                infiniteAttacks = true, resetWeapons = true,
+                turnTimeSec = 90, suddenDeathTurns = 50, caseFreq = 0,
+                minesTimeSec = 0, minesNum = 0, explosives = 0,
+                healthCaseProb = 0, waterRise = 0, healthDecrease = 0,
+            ),
+            Scheme(
+                name = "Sudden Death",
+                initHealth = 50, suddenDeathTurns = 8, waterRise = 100,
             ),
         )
     }
