@@ -82,6 +82,9 @@
 
     <!-- Game -->
     <string name="game_error_title">Engine error</string>
+    <string name="game_quit_title">Quit the match?</string>
+    <string name="game_quit_yes">Yes (A)</string>
+    <string name="game_quit_no">No (B)</string>
 
     <!-- Controls help -->
     <string name="controls_title">Controls</string>

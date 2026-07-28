@@ -76,6 +76,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        // Lets JVM tests exercise classes that log (android.util.Log no-ops).
+        unitTests.isReturnDefaultValues = true
+    }
     kotlinOptions {
         jvmTarget = "17"
     }

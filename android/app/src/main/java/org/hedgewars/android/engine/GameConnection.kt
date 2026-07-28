@@ -49,11 +49,29 @@ class GameConnection(
     @Volatile
     private var socket: Socket? = null
 
+    /** Connected stream for [send]; the IPC thread also writes its replies. */
+    @Volatile
+    private var sendStream: java.io.OutputStream? = null
+    private val writeLock = Any()
+
     private val thread = Thread({ run() }, "hw-game-ipc")
 
     fun start() {
         server.soTimeout = ACCEPT_TIMEOUT_MS
         thread.start()
+    }
+
+    /**
+     * Sends one command to the running engine — e.g. "eforcequit", the same
+     * clean abort the desktop frontend sends (QTfrontend/game.cpp
+     * HWGame::abort). Returns false when the engine is not connected (yet,
+     * or anymore). Does socket I/O: never call from the main thread.
+     */
+    fun send(command: String): Boolean {
+        val out = sendStream ?: return false
+        return runCatching {
+            synchronized(writeLock) { EngineProtocol.write(out, command) }
+        }.isSuccess
     }
 
     private fun run() {
@@ -63,6 +81,7 @@ class GameConnection(
             client.tcpNoDelay = true
             val input = client.getInputStream()
             val output = client.getOutputStream()
+            sendStream = output
             var interrupted = false
             var finished = false
 
@@ -70,12 +89,14 @@ class GameConnection(
                 val msg = EngineProtocol.read(input) ?: break
                 if (msg.isEmpty()) continue
                 when (msg[0].toInt().toChar()) {
-                    '?' -> EngineProtocol.write(output, "!")
+                    '?' -> synchronized(writeLock) { EngineProtocol.write(output, "!") }
                     'C' -> {
                         val cfg = configCommands()
                         Log.i(TAG, "engine asked for config; sending ${cfg.size} commands")
-                        output.write(EngineProtocol.encodeAll(cfg))
-                        output.flush()
+                        synchronized(writeLock) {
+                            output.write(EngineProtocol.encodeAll(cfg))
+                            output.flush()
+                        }
                     }
                     // An error after the game already reported its end (q/Q)
                     // is teardown noise, not a match failure — the outcome
@@ -105,6 +126,7 @@ class GameConnection(
         } catch (e: Exception) {
             Log.w(TAG, "IPC loop ended: $e")
         } finally {
+            sendStream = null
             close()
         }
     }
@@ -123,7 +145,7 @@ class GameConnection(
             '?' -> {
                 val value = varStore.getVar(campaign, body)
                 val prefix = if (campaign) "V." else "v."
-                EngineProtocol.write(output, prefix + value)
+                synchronized(writeLock) { EngineProtocol.write(output, prefix + value) }
             }
             '!' -> {
                 val i = body.indexOf(' ')

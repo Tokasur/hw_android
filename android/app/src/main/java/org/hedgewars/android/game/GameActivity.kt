@@ -1,5 +1,6 @@
 package org.hedgewars.android.game
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -8,8 +9,10 @@ import android.opengl.EGL14
 import android.os.Bundle
 import android.os.Process
 import android.util.Log
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.WindowManager
+import org.hedgewars.android.R
 import org.hedgewars.android.data.CampaignStore
 import org.hedgewars.android.engine.EngineLoader
 import org.hedgewars.android.engine.EngineOutcome
@@ -33,6 +36,7 @@ import org.libsdl.app.SDLSurface
 class GameActivity : SDLActivity() {
 
     private var connection: GameConnection? = null
+    private var quitDialog: AlertDialog? = null
 
     /**
      * Set when the system re-created this activity after a process death
@@ -168,6 +172,95 @@ class GameActivity : SDLActivity() {
         if (hasFocus) applyImmersiveDecor()
     }
 
+    // Back and gamepad Select open our quit dialog, and must never reach SDL:
+    // in the engine they only toggle a confirm overlay whose "press Y" answer
+    // no gamepad or touch screen can give. Depending on the Android release
+    // back arrives here as a key event, through the callback below, or both —
+    // [showQuitDialog] is idempotent, so either path is safe.
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_BACK ||
+            event.keyCode == KeyEvent.KEYCODE_BUTTON_SELECT
+        ) {
+            if (event.action == KeyEvent.ACTION_UP) showQuitDialog()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    /**
+     * System back. On API 33+ the framework routes back through
+     * OnBackInvokedCallback and never sends a KEYCODE_BACK event nor calls
+     * onBackPressed — without registering here, back silently destroyed the
+     * activity mid-match (the menu then read the still-"running" outcome as a
+     * crash and auto-relaunched a new game).
+     */
+    private val backCallback =
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            android.window.OnBackInvokedCallback { showQuitDialog() }
+        } else {
+            null
+        }
+
+    @Deprecated("Deprecated in Java")
+    @Suppress("MissingSuperCall")
+    override fun onBackPressed() {
+        // Pre-33 path (and gesture back on older releases).
+        showQuitDialog()
+    }
+
+    private fun showQuitDialog() {
+        if (isFinishing || quitDialog?.isShowing == true) return
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.game_quit_title)
+            .setPositiveButton(R.string.game_quit_yes) { _, _ -> quitMatch() }
+            .setNegativeButton(R.string.game_quit_no) { _, _ -> resumeMatch() }
+            .setOnCancelListener { resumeMatch() }
+            .create()
+        // The dialog window owns every key while shown (the running game sees
+        // none of them): A confirms, B or Select cancels, back dismisses by
+        // itself. Touch just taps the buttons.
+        dialog.setOnKeyListener { d, keyCode, event ->
+            if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                KeyEvent.KEYCODE_BUTTON_A -> {
+                    d.dismiss()
+                    quitMatch()
+                    true
+                }
+                KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_BUTTON_SELECT -> {
+                    d.cancel()
+                    true
+                }
+                else -> false
+            }
+        }
+        quitDialog = dialog
+        dialog.show()
+    }
+
+    /**
+     * Undoes the pause the engine applies whenever it loses focus (uWorld.pas
+     * onFocusStateChanged) — it never resumes on its own, so without this the
+     * match stays frozen after the player answers "no". 'pause' is a toggle
+     * and the engine is necessarily paused while the dialog is up.
+     */
+    private fun resumeMatch() {
+        val conn = connection ?: return
+        Thread({ conn.send("epause") }, "hw-resume").start()
+    }
+
+    private fun quitMatch() {
+        // The desktop frontend's abort: one IPC command, the engine answers
+        // 'Q' and the normal finished path returns to the menu. Socket I/O is
+        // forbidden on the main thread; if the engine is already unreachable,
+        // fall back to closing the activity (onStop marks the outcome ok).
+        Thread({
+            if (connection?.send("eforcequit") != true) {
+                runOnUiThread { if (!isFinishing) finishAndRemoveTask() }
+            }
+        }, "hw-quit").start()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // A saved state means the system is resurrecting a match whose
         // process died — a legitimate launch from GameLauncher always starts
@@ -249,6 +342,12 @@ class GameActivity : SDLActivity() {
 
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        backCallback?.let {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                it,
+            )
+        }
     }
 
     // Outcome bookkeeping across backgrounding: swiping the task away kills
@@ -288,6 +387,9 @@ class GameActivity : SDLActivity() {
     }
 
     override fun onDestroy() {
+        backCallback?.let { onBackInvokedDispatcher.unregisterOnBackInvokedCallback(it) }
+        quitDialog?.dismiss()
+        quitDialog = null
         connection?.close()
         if (!ghostRecreation) EngineOutcome.markAbortedByUser(this)
         super.onDestroy()

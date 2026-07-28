@@ -80,6 +80,9 @@
 
     <!-- Jeu -->
     <string name="game_error_title">Erreur du moteur</string>
+    <string name="game_quit_title">Quitter la partie ?</string>
+    <string name="game_quit_yes">Oui (A)</string>
+    <string name="game_quit_no">Non (B)</string>
 
     <!-- Aide contrôles -->
     <string name="controls_title">Contrôles</string>
