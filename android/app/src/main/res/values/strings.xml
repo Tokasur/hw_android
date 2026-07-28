@@ -89,4 +89,150 @@
     <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, right stick moves the camera, A jump, B backflip, X fire, Y weapon menu, Start pause. In the weapon menu, the D-pad browses, A or X picks, B or Y closes. R1/R2 cycle the grenade fuse (1-5 s), L1 cycles bounciness. Hold L2 to aim precisely.</string>
     <!-- Engine crash handling -->
     <string name="engine_crash_retry">The game crashed at start — retrying…</string>
+
+    <!-- Scheme & weapon-set editors -->
+    <string name="common_save">Save</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_duplicate">Duplicate</string>
+    <string name="common_copy_of">Copy of %1$s</string>
+    <string name="name_error_empty">Name required</string>
+    <string name="name_error_taken">Name already used</string>
+    <string name="presets_header">Presets</string>
+
+    <string name="schemes_title">Game schemes</string>
+    <string name="schemes_new">New scheme</string>
+    <string name="schemes_edit">Edit scheme</string>
+    <string name="schemes_custom">My schemes</string>
+    <string name="scheme_name">Scheme name</string>
+    <string name="scheme_basic">Basic settings</string>
+    <string name="scheme_modifiers">Game modifiers</string>
+    <string name="scheme_random">Random</string>
+    <string name="scheme_never">Never</string>
+    <string name="scheme_edge_none">None</string>
+    <string name="scheme_edge_wrap">Wrap around</string>
+    <string name="scheme_edge_bounce">Bounce</string>
+    <string name="scheme_edge_sea">Sea</string>
+    <string name="scheme_num_damage">Damage (%)</string>
+    <string name="scheme_num_turn_time">Turn time (s)</string>
+    <string name="scheme_num_init_health">Initial health</string>
+    <string name="scheme_num_sd_turns">Sudden death after (turns)</string>
+    <string name="scheme_num_case_freq">Crate drops (every N turns)</string>
+    <string name="scheme_num_mines_time">Mine timer (s)</string>
+    <string name="scheme_num_mines_num">Mines</string>
+    <string name="scheme_num_dud_pct">Dud mines (%)</string>
+    <string name="scheme_num_explosives">Barrels</string>
+    <string name="scheme_num_air_mines">Air mines</string>
+    <string name="scheme_num_sentries">Sentry bots</string>
+    <string name="scheme_num_health_prob">Health crates (%)</string>
+    <string name="scheme_num_health_amount">Health per crate</string>
+    <string name="scheme_num_water_rise">Sudden death: water rise</string>
+    <string name="scheme_num_health_dec">Sudden death: health loss</string>
+    <string name="scheme_num_rope_pct">Rope length (%)</string>
+    <string name="scheme_num_get_away">Retreat time (%)</string>
+    <string name="scheme_world_edge">World edge</string>
+    <string name="scheme_script_param">Script parameter</string>
+    <string name="scheme_mod_divide_teams">Divide teams</string>
+    <string name="scheme_mod_solid_land">Indestructible land</string>
+    <string name="scheme_mod_border">Indestructible border</string>
+    <string name="scheme_mod_low_gravity">Low gravity</string>
+    <string name="scheme_mod_laser_sight">Laser sight</string>
+    <string name="scheme_mod_invulnerable">Invulnerable</string>
+    <string name="scheme_mod_reset_health">Reset health each turn</string>
+    <string name="scheme_mod_vampirism">Vampirism</string>
+    <string name="scheme_mod_karma">Karma</string>
+    <string name="scheme_mod_artillery">Artillery (no walking)</string>
+    <string name="scheme_mod_random_order">Random play order</string>
+    <string name="scheme_mod_king">King mode</string>
+    <string name="scheme_mod_place_hogs">Place hedgehogs manually</string>
+    <string name="scheme_mod_shared_ammo">Clan shares ammo</string>
+    <string name="scheme_mod_disable_girders">No girders on random maps</string>
+    <string name="scheme_mod_disable_land_objects">No land objects</string>
+    <string name="scheme_mod_ai_survival">AI hedgehogs respawn</string>
+    <string name="scheme_mod_infinite_attacks">Unlimited attacks per turn</string>
+    <string name="scheme_mod_reset_weapons">Reset weapons each turn</string>
+    <string name="scheme_mod_per_hog_ammo">Per-hedgehog ammo</string>
+    <string name="scheme_mod_no_wind">No wind</string>
+    <string name="scheme_mod_more_wind">More wind</string>
+    <string name="scheme_mod_tag_team">Tag team</string>
+    <string name="scheme_mod_bottom_border">Bottom border</string>
+    <string name="scheme_mod_switch_hog">Select hedgehog at turn start</string>
+
+    <string name="weapon_sets_title">Weapon sets</string>
+    <string name="weapon_sets_new">New weapon set</string>
+    <string name="weapon_sets_edit">Edit weapon set</string>
+    <string name="weapon_sets_custom">My weapon sets</string>
+    <string name="weapons_name">Set name</string>
+    <string name="weapons_tab_loadout">Loadout</string>
+    <string name="weapons_tab_probability">Crate chance</string>
+    <string name="weapons_tab_delay">Delay</string>
+    <string name="weapons_tab_crate">Per crate</string>
+    <string name="weapons_hint_loadout">Starting ammo — 9 means infinite</string>
+    <string name="weapons_hint_probability">Chance to appear in crates (0 = never)</string>
+    <string name="weapons_hint_delay">Turns before the weapon unlocks</string>
+    <string name="weapons_hint_crate">Amount found in an ammo crate</string>
+    <string name="edit_pencil">Edit</string>
+
+    <!-- The 60 ammo types, in engine TAmmoType / ammo-string order -->
+    <string-array name="ammo_names">
+        <item>Grenade</item>
+        <item>Cluster Bomb</item>
+        <item>Bazooka</item>
+        <item>Homing Bee</item>
+        <item>Shotgun</item>
+        <item>Pick Hammer</item>
+        <item>Skip</item>
+        <item>Rope</item>
+        <item>Mine</item>
+        <item>Desert Eagle</item>
+        <item>Dynamite</item>
+        <item>Shoryuken</item>
+        <item>Whip</item>
+        <item>Baseball Bat</item>
+        <item>Parachute</item>
+        <item>Air Attack</item>
+        <item>Mine Strike</item>
+        <item>Blow Torch</item>
+        <item>Construction</item>
+        <item>Teleportation</item>
+        <item>Switch Hedgehog</item>
+        <item>Mortar</item>
+        <item>Kamikaze</item>
+        <item>Cake</item>
+        <item>Seduction</item>
+        <item>Watermelon Bomb</item>
+        <item>Hellish hand-grenade</item>
+        <item>Napalm</item>
+        <item>Drill Rocket</item>
+        <item>Ballgun</item>
+        <item>RC Plane</item>
+        <item>Low Gravity</item>
+        <item>Extra Damage</item>
+        <item>Invulnerable</item>
+        <item>Extra Time</item>
+        <item>Laser Sight</item>
+        <item>Vampirism</item>
+        <item>Sniper Rifle</item>
+        <item>Flying Saucer</item>
+        <item>Molotov Cocktail</item>
+        <item>Birdy</item>
+        <item>Portable Portal Device</item>
+        <item>Piano Strike</item>
+        <item>Old Limburger</item>
+        <item>Sine Gun</item>
+        <item>Flamethrower</item>
+        <item>Sticky Mine</item>
+        <item>Hammer</item>
+        <item>Resurrector</item>
+        <item>Drill Strike</item>
+        <item>Mudball</item>
+        <item>Time Box</item>
+        <item>Land Spray</item>
+        <item>Freezer</item>
+        <item>Cleaver</item>
+        <item>Rubber</item>
+        <item>Air Mine</item>
+        <item>Creeper</item>
+        <item>Minigun</item>
+        <item>Sentry Bot</item>
+    </string-array>
 </resources>
