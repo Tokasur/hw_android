@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
 import org.hedgewars.android.R
 import org.hedgewars.android.data.TeamsRepository
@@ -27,6 +28,11 @@ fun TeamsScreen(nav: NavController) {
     val context = LocalContext.current
     val repo = remember { TeamsRepository(context) }
     val teams = remember { mutableStateOf(repo.list()) }
+    // Reload when we come back from the editor, else the list goes stale.
+    LifecycleResumeEffect(Unit) {
+        teams.value = repo.list()
+        onPauseOrDispose { }
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text(stringResource(R.string.teams_title), style = MaterialTheme.typography.headlineMedium)

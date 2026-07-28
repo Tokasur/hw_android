@@ -29,7 +29,11 @@ import org.hedgewars.android.ui.menu.HomeScreen
 import org.hedgewars.android.ui.missions.MissionsScreen
 import org.hedgewars.android.ui.newgame.NewGameMode
 import org.hedgewars.android.ui.newgame.NewGameScreen
+import org.hedgewars.android.ui.schemes.SchemeEditScreen
+import org.hedgewars.android.ui.schemes.SchemesScreen
 import org.hedgewars.android.ui.settings.SettingsScreen
+import org.hedgewars.android.ui.weapons.WeaponSetEditScreen
+import org.hedgewars.android.ui.weapons.WeaponSetsScreen
 import org.hedgewars.android.ui.teams.TeamEditScreen
 import org.hedgewars.android.ui.teams.TeamsScreen
 import org.hedgewars.android.ui.theme.HedgewarsBackground
@@ -128,6 +132,16 @@ private fun AppNavigation() {
                 TeamEditScreen(nav, entry.arguments?.getString("name"))
             }
             composable("teamEdit") { TeamEditScreen(nav, null) }
+            composable("schemes") { SchemesScreen(nav) }
+            composable("schemeEdit/{name}") { entry ->
+                SchemeEditScreen(nav, entry.arguments?.getString("name"))
+            }
+            composable("schemeEdit") { SchemeEditScreen(nav, null) }
+            composable("weaponSets") { WeaponSetsScreen(nav) }
+            composable("weaponSetEdit/{name}") { entry ->
+                WeaponSetEditScreen(nav, entry.arguments?.getString("name"))
+            }
+            composable("weaponSetEdit") { WeaponSetEditScreen(nav, null) }
             composable("settings") { SettingsScreen(nav) }
             composable("about") { AboutScreen(nav) }
             composable("controls") { ControlsScreen(nav) }

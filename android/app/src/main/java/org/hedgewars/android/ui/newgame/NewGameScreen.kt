@@ -21,14 +21,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
+import org.hedgewars.android.R
 import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.MapChoice
 import org.hedgewars.android.config.Scheme
@@ -37,9 +41,12 @@ import org.hedgewars.android.config.TeamSlot
 import org.hedgewars.android.config.WeaponSet
 import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.MissionsRepository
+import org.hedgewars.android.data.SchemesRepository
 import org.hedgewars.android.data.TeamsRepository
+import org.hedgewars.android.data.WeaponSetsRepository
 import org.hedgewars.android.game.GameLauncher
 import org.hedgewars.android.ui.common.DifficultyBadge
+import org.hedgewars.android.ui.common.DropdownPicker
 import org.hedgewars.android.ui.common.HwButton
 import org.hedgewars.android.ui.common.HwChip
 import org.hedgewars.android.ui.common.HwPanel
@@ -62,6 +69,8 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     val context = LocalContext.current
     val paths = remember { GamePaths(context) }
     val teamsRepo = remember { TeamsRepository(context) }
+    val schemesRepo = remember { SchemesRepository(context) }
+    val weaponsRepo = remember { WeaponSetsRepository(context) }
     val missions = remember { MissionsRepository(paths) }
     val launcher = remember { GameLauncher(context) }
 
@@ -75,9 +84,21 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     var featureSize by remember { mutableStateOf(50f) }
     var seed by remember { mutableStateOf(GameConfig.newSeed()) }
     var theme by remember { mutableStateOf(if ("Nature" in themes) "Nature" else themes.first()) }
-    var schemeName by remember { mutableStateOf(Scheme.DEFAULT.name) }
-    var weaponsName by remember { mutableStateOf(WeaponSet.DEFAULT.name) }
+    var schemeName by rememberSaveable { mutableStateOf(Scheme.DEFAULT.name) }
+    var weaponsName by rememberSaveable { mutableStateOf(WeaponSet.DEFAULT.name) }
     var hogCount by remember { mutableStateOf(4f) }
+
+    // Custom schemes/weapon sets can appear or vanish while we're away in
+    // their editors; reload on every resume and snap dead selections back.
+    var schemeNames by remember { mutableStateOf(Scheme.PRESETS.map { it.name }) }
+    var weaponNames by remember { mutableStateOf(WeaponSet.PRESETS.map { it.name }) }
+    LifecycleResumeEffect(Unit) {
+        schemeNames = schemesRepo.all().map { it.name }
+        weaponNames = weaponsRepo.all().map { it.name }
+        if (schemeName !in schemeNames) schemeName = Scheme.DEFAULT.name
+        if (weaponsName !in weaponNames) weaponsName = WeaponSet.DEFAULT.name
+        onPauseOrDispose { }
+    }
 
     // Quick game: single AI difficulty. Multiplayer: a live list of slots.
     var aiDifficulty by remember { mutableStateOf(3) }
@@ -127,11 +148,23 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 ThemePicker(paths.dataDir, themes, theme) { theme = it }
             }
 
-            SectionHeader("Scheme")
-            PresetChips(Scheme.PRESETS.map { it.name }, schemeName) { schemeName = it }
+            SectionHeader(stringResource(R.string.local_game_scheme))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DropdownPicker("", schemeNames, schemeName, Modifier.weight(1f)) { schemeName = it }
+                HwChip("✎", selected = false, onClick = { nav.navigate("schemes") })
+            }
 
-            SectionHeader("Weapons")
-            PresetChips(WeaponSet.PRESETS.map { it.name }, weaponsName) { weaponsName = it }
+            SectionHeader(stringResource(R.string.local_game_weapons))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                DropdownPicker("", weaponNames, weaponsName, Modifier.weight(1f)) { weaponsName = it }
+                HwChip("✎", selected = false, onClick = { nav.navigate("weaponSets") })
+            }
 
             SectionHeader("Hedgehogs per team: ${hogCount.toInt()}")
             Slider(value = hogCount, onValueChange = { hogCount = it }, valueRange = 1f..8f, steps = 6)
@@ -168,8 +201,8 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 launcher.launchLocalGame(
                     GameConfig(
                         teams = teams,
-                        scheme = Scheme.PRESETS.first { it.name == schemeName },
-                        weapons = WeaponSet.PRESETS.first { it.name == weaponsName },
+                        scheme = schemesRepo.resolve(schemeName),
+                        weapons = weaponsRepo.resolve(weaponsName),
                         map = map,
                         theme = theme,
                         seed = seed,

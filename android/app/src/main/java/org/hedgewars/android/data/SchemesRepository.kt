@@ -11,6 +11,14 @@ import org.hedgewars.android.config.clamped
 enum class NameError { EMPTY, TAKEN }
 
 /**
+ * Live input filter for custom names. Restricting to this charset keeps
+ * `name + ".json"` an injective, file-safe mapping (no rename collisions)
+ * and stays valid in navigation routes once Uri-encoded.
+ */
+fun sanitizeCustomName(raw: String): String =
+    raw.filter { it in 'A'..'Z' || it in 'a'..'z' || it in '0'..'9' || it in " _-" }
+
+/**
  * User-created game schemes as one JSON file each under the app's private
  * storage, alongside the compiled-in [Scheme.PRESETS] (read-only, like the
  * desktop frontend). Names are restricted to [A-Za-z0-9 _-] by the editor,

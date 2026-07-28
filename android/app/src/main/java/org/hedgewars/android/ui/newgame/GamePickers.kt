@@ -174,13 +174,3 @@ fun ThemePicker(
         }
     }
 }
-
-/** A single-select row of preset chips (schemes, weapon sets, styles). */
-@Composable
-fun PresetChips(options: List<String>, selected: String, onSelect: (String) -> Unit) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(options, key = { it }) { name ->
-            HwChip(name, name == selected) { onSelect(name) }
-        }
-    }
-}

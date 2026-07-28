@@ -85,4 +85,150 @@
     <string name="controls_title">Contrôles</string>
     <string name="controls_touch">Tactile : faites glisser pour déplacer la caméra, pincez pour zoomer. Utilisez les flèches à l\'écran pour marcher, le viseur pour ajuster l\'angle, le bouton de tir pour tirer (maintenez pour plus de puissance). Touchez votre hérisson ou le bouton dédié pour ouvrir le menu des armes. Touchez une cible pour les frappes aériennes.</string>
     <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, stick droit pour la caméra, A saut, B salto arrière, X tir, Y menu des armes, Start pause. Dans le menu des armes, la croix parcourt, A ou X valide, B ou Y ferme. R1/R2 font défiler le délai des grenades (1-5 s), L1 le rebond. L2 maintenu = visée précise.</string>
+
+    <!-- Éditeurs de schémas et de jeux d'armes -->
+    <string name="common_save">Enregistrer</string>
+    <string name="common_delete">Supprimer</string>
+    <string name="common_duplicate">Dupliquer</string>
+    <string name="common_copy_of">Copie de %1$s</string>
+    <string name="name_error_empty">Nom requis</string>
+    <string name="name_error_taken">Nom déjà utilisé</string>
+    <string name="presets_header">Préréglages</string>
+
+    <string name="schemes_title">Schémas de jeu</string>
+    <string name="schemes_new">Nouveau schéma</string>
+    <string name="schemes_edit">Modifier le schéma</string>
+    <string name="schemes_custom">Mes schémas</string>
+    <string name="scheme_name">Nom du schéma</string>
+    <string name="scheme_basic">Réglages de base</string>
+    <string name="scheme_modifiers">Modificateurs de jeu</string>
+    <string name="scheme_random">Aléatoire</string>
+    <string name="scheme_never">Jamais</string>
+    <string name="scheme_edge_none">Aucun</string>
+    <string name="scheme_edge_wrap">Traversant</string>
+    <string name="scheme_edge_bounce">Rebond</string>
+    <string name="scheme_edge_sea">Mer</string>
+    <string name="scheme_num_damage">Dégâts (%)</string>
+    <string name="scheme_num_turn_time">Durée du tour (s)</string>
+    <string name="scheme_num_init_health">Santé initiale</string>
+    <string name="scheme_num_sd_turns">Mort subite après (tours)</string>
+    <string name="scheme_num_case_freq">Caisses (tous les N tours)</string>
+    <string name="scheme_num_mines_time">Minuteur des mines (s)</string>
+    <string name="scheme_num_mines_num">Mines</string>
+    <string name="scheme_num_dud_pct">Mines défectueuses (%)</string>
+    <string name="scheme_num_explosives">Barils</string>
+    <string name="scheme_num_air_mines">Mines volantes</string>
+    <string name="scheme_num_sentries">Robots sentinelles</string>
+    <string name="scheme_num_health_prob">Caisses de soin (%)</string>
+    <string name="scheme_num_health_amount">Soin par caisse</string>
+    <string name="scheme_num_water_rise">Mort subite : montée des eaux</string>
+    <string name="scheme_num_health_dec">Mort subite : perte de santé</string>
+    <string name="scheme_num_rope_pct">Longueur du grappin (%)</string>
+    <string name="scheme_num_get_away">Temps de retraite (%)</string>
+    <string name="scheme_world_edge">Bord du monde</string>
+    <string name="scheme_script_param">Paramètre de script</string>
+    <string name="scheme_mod_divide_teams">Répartir les équipes</string>
+    <string name="scheme_mod_solid_land">Terrain indestructible</string>
+    <string name="scheme_mod_border">Bordure indestructible</string>
+    <string name="scheme_mod_low_gravity">Gravité faible</string>
+    <string name="scheme_mod_laser_sight">Visée laser</string>
+    <string name="scheme_mod_invulnerable">Invulnérables</string>
+    <string name="scheme_mod_reset_health">Santé restaurée chaque tour</string>
+    <string name="scheme_mod_vampirism">Vampirisme</string>
+    <string name="scheme_mod_karma">Karma</string>
+    <string name="scheme_mod_artillery">Artillerie (pas de déplacement)</string>
+    <string name="scheme_mod_random_order">Ordre de jeu aléatoire</string>
+    <string name="scheme_mod_king">Mode roi</string>
+    <string name="scheme_mod_place_hogs">Placement manuel des hérissons</string>
+    <string name="scheme_mod_shared_ammo">Munitions partagées par clan</string>
+    <string name="scheme_mod_disable_girders">Pas de poutres (cartes aléatoires)</string>
+    <string name="scheme_mod_disable_land_objects">Pas d\'objets au sol</string>
+    <string name="scheme_mod_ai_survival">Les IA réapparaissent</string>
+    <string name="scheme_mod_infinite_attacks">Attaques illimitées par tour</string>
+    <string name="scheme_mod_reset_weapons">Armes restaurées chaque tour</string>
+    <string name="scheme_mod_per_hog_ammo">Munitions par hérisson</string>
+    <string name="scheme_mod_no_wind">Pas de vent</string>
+    <string name="scheme_mod_more_wind">Plus de vent</string>
+    <string name="scheme_mod_tag_team">Équipes en relais</string>
+    <string name="scheme_mod_bottom_border">Bordure inférieure</string>
+    <string name="scheme_mod_switch_hog">Choix du hérisson en début de tour</string>
+
+    <string name="weapon_sets_title">Jeux d\'armes</string>
+    <string name="weapon_sets_new">Nouveau jeu d\'armes</string>
+    <string name="weapon_sets_edit">Modifier le jeu d\'armes</string>
+    <string name="weapon_sets_custom">Mes jeux d\'armes</string>
+    <string name="weapons_name">Nom du jeu d\'armes</string>
+    <string name="weapons_tab_loadout">Munitions</string>
+    <string name="weapons_tab_probability">Probabilité</string>
+    <string name="weapons_tab_delay">Délai</string>
+    <string name="weapons_tab_crate">Par caisse</string>
+    <string name="weapons_hint_loadout">Munitions de départ — 9 = infini</string>
+    <string name="weapons_hint_probability">Chance d\'apparaître dans les caisses (0 = jamais)</string>
+    <string name="weapons_hint_delay">Tours avant le déblocage de l\'arme</string>
+    <string name="weapons_hint_crate">Quantité par caisse de munitions</string>
+    <string name="edit_pencil">Modifier</string>
+
+    <!-- The 60 ammo types, in engine TAmmoType / ammo-string order -->
+    <string-array name="ammo_names">
+        <item>Grenade</item>
+        <item>Grenade à fragmentation</item>
+        <item>Bazooka</item>
+        <item>Abeille à tête chercheuse</item>
+        <item>Fusil</item>
+        <item>Marteau-piqueur</item>
+        <item>Passer</item>
+        <item>Grappin</item>
+        <item>Mine</item>
+        <item>Pistolet</item>
+        <item>Dynamite</item>
+        <item>Shoryuken</item>
+        <item>Fouet</item>
+        <item>Batte de baseball</item>
+        <item>Parachute</item>
+        <item>Frappe aérienne</item>
+        <item>Pluie de mines</item>
+        <item>Chalumeau</item>
+        <item>Construction</item>
+        <item>Téléportation</item>
+        <item>Changer d\'hérisson</item>
+        <item>Mortier</item>
+        <item>Kamikaze</item>
+        <item>Gâteau</item>
+        <item>Séduction</item>
+        <item>Bombe pastèque</item>
+        <item>Grenade infernale</item>
+        <item>Napalm</item>
+        <item>Roquette perforante</item>
+        <item>Mitrailleuse à balle</item>
+        <item>Avion télécommandé</item>
+        <item>Faible gravité</item>
+        <item>Dégâts supplémentaires</item>
+        <item>Invulnérable</item>
+        <item>Temps supplémentaire</item>
+        <item>Visée laser</item>
+        <item>Vampirisme</item>
+        <item>Sniper</item>
+        <item>Soucoupe Volante</item>
+        <item>Cocktail Molotov</item>
+        <item>Piaf</item>
+        <item>Générateur de portails</item>
+        <item>Chute de Piano</item>
+        <item>Vieux fromage</item>
+        <item>Fusil Sinusoïdal</item>
+        <item>Lance-flammes</item>
+        <item>Mines adhésives</item>
+        <item>Marteau</item>
+        <item>Resurrecteur</item>
+        <item>Attaque perforante</item>
+        <item>Boule de terre</item>
+        <item>Boîte temporelle</item>
+        <item>Aéro-Sol</item>
+        <item>Congélateur</item>
+        <item>Hachoir</item>
+        <item>Rubber</item>
+        <item>Air Mine</item>
+        <item>Creeper</item>
+        <item>Minigun</item>
+        <item>Sentry Bot</item>
+    </string-array>
 </resources>
