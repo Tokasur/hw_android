@@ -113,4 +113,11 @@ class SchemesRepositoryTest {
         assertTrue(repo().isPreset("racer"))
         assertTrue(!repo().isPreset("My Rules"))
     }
+
+    @Test
+    fun `name filter keeps accented letters but drops path and route hazards`() {
+        assertEquals("Barils à gogo", sanitizeCustomName("Barils à gogo"))
+        assertEquals("Règles dÉté_2-fun", sanitizeCustomName("Règles d'Été_2-fun!"))
+        assertEquals("evil ", sanitizeCustomName("/../ev:il\\ "))
+    }
 }
