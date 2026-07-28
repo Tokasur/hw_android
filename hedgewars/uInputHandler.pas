@@ -735,11 +735,16 @@ end;
 // InitKbdKeyTable builds: per controller, axes*2 then hats*4 then buttons*1
 // names. (The old formula counted buttons twice — harmless only while a
 // single controller existed.)
-function controllerKeyBase(joy: Byte): LongInt;
+// joy MUST be signed here: with an unsigned loop bound, slot 0 made
+// `pred(joy)` wrap to 255 and the loop summed garbage far past the arrays —
+// the first pad event then indexed tkbd gigabytes away. SIGSEGV on the
+// first button press of a real gamepad (invisible on the emulator, which
+// never delivers a single controller event).
+function controllerKeyBase(joy: LongInt): LongInt;
 var k, i: LongInt;
 begin
     SDL_GetKeyboardState(@k);
-    for i:= 0 to pred(joy) do
+    for i:= 0 to joy - 1 do
         k:= k + ControllerNumAxes[i]*2 + ControllerNumHats[i]*4 + ControllerNumButtons[i];
     controllerKeyBase:= k
 end;
