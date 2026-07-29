@@ -41,6 +41,12 @@ import org.hedgewars.android.ui.theme.HedgewarsBackground
 import org.hedgewars.android.ui.theme.HedgewarsTheme
 
 class MainActivity : ComponentActivity() {
+    // Applies the language chosen in settings on API < 33 (on API 33+ the
+    // platform's per-app language already did it before we get here).
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(org.hedgewars.android.data.AppLocale.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)

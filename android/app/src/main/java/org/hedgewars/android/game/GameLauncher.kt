@@ -103,7 +103,7 @@ class GameLauncher(private val context: Context) {
 
     /** Engine locale file matching the app language, if shipped. */
     private fun engineLocaleFile(): String {
-        val lang = context.resources.configuration.locales[0].language
+        val lang = org.hedgewars.android.data.AppLocale.effectiveLanguage(context)
         val file = "$lang.txt"
         return if (java.io.File(paths.dataDir, "Locale/$file").exists()) file else "en.txt"
     }

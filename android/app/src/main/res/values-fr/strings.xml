@@ -71,7 +71,7 @@
     <string name="settings_ui_scale_250">250 % (très grande)</string>
     <string name="settings_gamepad">Manette</string>
     <string name="settings_gamepad_enabled">Activer le mappage manette par défaut</string>
-    <string name="settings_controls_help">Aide des contrôles tactiles</string>
+    <string name="settings_controls_help">Contrôles (tactile et manette)</string>
 
     <!-- À propos -->
     <string name="about_title">À propos</string>
@@ -84,10 +84,6 @@
     <string name="game_quit_yes">Oui (A)</string>
     <string name="game_quit_no">Non (B)</string>
 
-    <!-- Aide contrôles -->
-    <string name="controls_title">Contrôles</string>
-    <string name="controls_touch">Tactile : faites glisser pour déplacer la caméra, pincez pour zoomer. Utilisez les flèches à l\'écran pour marcher, le viseur pour ajuster l\'angle, le bouton de tir pour tirer (maintenez pour plus de puissance). Touchez votre hérisson ou le bouton dédié pour ouvrir le menu des armes. Touchez une cible pour les frappes aériennes.</string>
-    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, stick droit pour la caméra, A saut, B salto arrière, X tir, Y menu des armes, Start pause. Dans le menu des armes, la croix parcourt, A ou X valide, B ou Y ferme. R1/R2 font défiler le délai des grenades (1-5 s), L1 le rebond. L2 maintenu = visée précise.</string>
 
     <!-- Éditeurs de schémas et de jeux d'armes -->
     <string name="common_save">Enregistrer</string>
@@ -253,4 +249,68 @@
     <string name="common_cancel">Annuler</string>
     <string name="local_game_style">Style de jeu</string>
     <string name="local_game_style_none">Aucun</string>
+
+    <!-- Aide des contrôles -->
+    <string name="controls_title">Contrôles</string>
+    <string name="controls_touch_title">Tactile</string>
+    <string name="controls_touch_move_in">Flèches</string>
+    <string name="controls_touch_move_out">Marcher à gauche ou à droite. Maintenez pour continuer.</string>
+    <string name="controls_touch_aim_in">Viseur</string>
+    <string name="controls_touch_aim_out">Glissez vers le haut ou le bas pour régler l\'angle.</string>
+    <string name="controls_touch_fire_in">Bouton de tir</string>
+    <string name="controls_touch_fire_out">Touchez pour tirer. Maintenez puis relâchez pour plus de puissance.</string>
+    <string name="controls_touch_ammo_in">Votre hérisson, ou la mallette</string>
+    <string name="controls_touch_ammo_out">Ouvre le menu des armes.</string>
+    <string name="controls_touch_target_in">Toucher le terrain</string>
+    <string name="controls_touch_target_out">Choisit la cible des armes qui en demandent une (frappe aérienne, téléportation…).</string>
+    <string name="controls_touch_camera_in">Glisser / pincer</string>
+    <string name="controls_touch_camera_out">Déplace la caméra et zoome.</string>
+    <string name="controls_touch_pause_in">Bouton pause (en haut à droite)</string>
+    <string name="controls_touch_pause_out">Met la partie en pause et la reprend.</string>
+
+    <string name="controls_jump_title">Les sauts</string>
+    <string name="controls_jump_intro">Trois mouvements sur un seul bouton — le bouton de saut au tactile, A et B à la manette.</string>
+    <string name="controls_jump_short_in">Appui court / A</string>
+    <string name="controls_jump_short_out">Saut : bondit vers le haut et un peu vers l\'avant, pour franchir un petit trou.</string>
+    <string name="controls_jump_double_in">Second appui en plein saut</string>
+    <string name="controls_jump_double_out">Salto arrière : saute plus haut et vers l\'arrière. Idéal pour se dégager ou monter sur un rebord derrière soi.</string>
+    <string name="controls_jump_long_in">Appui long / B</string>
+    <string name="controls_jump_long_out">Saut en longueur : un bond plus tendu et plus loin vers l\'avant.</string>
+
+    <string name="controls_gamepad_title">Manette</string>
+    <string name="controls_pad_move_in">Croix / stick gauche</string>
+    <string name="controls_pad_move_out">Marcher, et viser vers le haut ou le bas.</string>
+    <string name="controls_pad_precise_in">L2 maintenu</string>
+    <string name="controls_pad_precise_out">Viser précisément (le viseur bouge au ralenti).</string>
+    <string name="controls_pad_camera_in">Stick droit</string>
+    <string name="controls_pad_camera_out">Déplace la caméra.</string>
+    <string name="controls_pad_fire_in">X</string>
+    <string name="controls_pad_fire_out">Tirer. Maintenez pour plus de puissance.</string>
+    <string name="controls_pad_jump_in">A</string>
+    <string name="controls_pad_jump_out">Saut (rappuyez en plein vol pour un salto arrière).</string>
+    <string name="controls_pad_ljump_in">B</string>
+    <string name="controls_pad_ljump_out">Saut en longueur.</string>
+    <string name="controls_pad_ammo_in">Y</string>
+    <string name="controls_pad_ammo_out">Ouvre le menu des armes.</string>
+    <string name="controls_pad_pause_in">Start</string>
+    <string name="controls_pad_pause_out">Pause et reprise.</string>
+    <string name="controls_pad_quit_in">Select, ou le bouton retour</string>
+    <string name="controls_pad_quit_out">Demande si vous voulez quitter la partie (A oui, B non).</string>
+
+    <string name="controls_ammo_menu_title">Dans le menu des armes</string>
+    <string name="controls_menu_browse_in">Croix / toucher</string>
+    <string name="controls_menu_browse_out">Parcourt les armes.</string>
+    <string name="controls_menu_pick_in">A ou X / toucher</string>
+    <string name="controls_menu_pick_out">Choisit l\'arme.</string>
+    <string name="controls_menu_close_in">B ou Y / toucher à côté</string>
+    <string name="controls_menu_close_out">Ferme le menu.</string>
+
+    <string name="controls_weapon_title">Une arme en main</string>
+    <string name="controls_weapon_timer_in">R1 / R2</string>
+    <string name="controls_weapon_timer_out">Règle le délai des grenades et des mines (1 à 5 secondes).</string>
+    <string name="controls_weapon_bounce_in">L1</string>
+    <string name="controls_weapon_bounce_out">Règle le rebond du projectile.</string>
+
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_system">Langue du système</string>
 </resources>

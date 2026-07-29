@@ -73,7 +73,7 @@
     <string name="settings_ui_scale_250">250% (huge)</string>
     <string name="settings_gamepad">Gamepad</string>
     <string name="settings_gamepad_enabled">Enable default gamepad mapping</string>
-    <string name="settings_controls_help">Touch controls help</string>
+    <string name="settings_controls_help">Controls (touch &amp; gamepad)</string>
 
     <!-- About -->
     <string name="about_title">About</string>
@@ -86,10 +86,6 @@
     <string name="game_quit_yes">Yes (A)</string>
     <string name="game_quit_no">No (B)</string>
 
-    <!-- Controls help -->
-    <string name="controls_title">Controls</string>
-    <string name="controls_touch">Touch: drag to scroll, pinch to zoom. Use the on-screen arrows to walk, the aim widget to aim, the fire button to shoot (hold for more power). Tap your hedgehog or the corner button to open the weapon menu. Tap a target for air strikes.</string>
-    <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, right stick moves the camera, A jump, B backflip, X fire, Y weapon menu, Start pause. In the weapon menu, the D-pad browses, A or X picks, B or Y closes. R1/R2 cycle the grenade fuse (1-5 s), L1 cycles bounciness. Hold L2 to aim precisely.</string>
     <!-- Engine crash handling -->
     <string name="engine_crash_retry">The game crashed at start — retrying…</string>
 
@@ -257,4 +253,68 @@
     <string name="common_cancel">Cancel</string>
     <string name="local_game_style">Game style</string>
     <string name="local_game_style_none">None</string>
+
+    <!-- Controls reference -->
+    <string name="controls_title">Controls</string>
+    <string name="controls_touch_title">Touch</string>
+    <string name="controls_touch_move_in">Arrows</string>
+    <string name="controls_touch_move_out">Walk left or right. Hold to keep walking.</string>
+    <string name="controls_touch_aim_in">Aim widget</string>
+    <string name="controls_touch_aim_out">Drag up or down to change the angle.</string>
+    <string name="controls_touch_fire_in">Fire button</string>
+    <string name="controls_touch_fire_out">Tap to shoot. Hold and release for more power.</string>
+    <string name="controls_touch_ammo_in">Your hedgehog, or the briefcase</string>
+    <string name="controls_touch_ammo_out">Opens the weapon menu.</string>
+    <string name="controls_touch_target_in">Tap the ground</string>
+    <string name="controls_touch_target_out">Picks the target of weapons that need one (air strikes, teleport…).</string>
+    <string name="controls_touch_camera_in">Drag / pinch</string>
+    <string name="controls_touch_camera_out">Move the camera and zoom in or out.</string>
+    <string name="controls_touch_pause_in">Pause button (top right)</string>
+    <string name="controls_touch_pause_out">Pauses and resumes the match.</string>
+
+    <string name="controls_jump_title">Jumping</string>
+    <string name="controls_jump_intro">Three moves share one button — on touch the jump button, on a gamepad A and B.</string>
+    <string name="controls_jump_short_in">Short tap / A</string>
+    <string name="controls_jump_short_out">Jump: hops up and slightly forward, over small gaps.</string>
+    <string name="controls_jump_double_in">Tap again in mid-air</string>
+    <string name="controls_jump_double_out">Backflip: jumps higher and backwards. Use it to escape or get on a ledge behind you.</string>
+    <string name="controls_jump_long_in">Long press / B</string>
+    <string name="controls_jump_long_out">Long jump: a flatter, longer leap forward.</string>
+
+    <string name="controls_gamepad_title">Gamepad</string>
+    <string name="controls_pad_move_in">D-pad / left stick</string>
+    <string name="controls_pad_move_out">Walk, and aim up or down.</string>
+    <string name="controls_pad_precise_in">L2 held</string>
+    <string name="controls_pad_precise_out">Aim precisely (slow motion of the crosshair).</string>
+    <string name="controls_pad_camera_in">Right stick</string>
+    <string name="controls_pad_camera_out">Move the camera.</string>
+    <string name="controls_pad_fire_in">X</string>
+    <string name="controls_pad_fire_out">Fire. Hold for more power.</string>
+    <string name="controls_pad_jump_in">A</string>
+    <string name="controls_pad_jump_out">Jump (press again in mid-air for a backflip).</string>
+    <string name="controls_pad_ljump_in">B</string>
+    <string name="controls_pad_ljump_out">Long jump.</string>
+    <string name="controls_pad_ammo_in">Y</string>
+    <string name="controls_pad_ammo_out">Opens the weapon menu.</string>
+    <string name="controls_pad_pause_in">Start</string>
+    <string name="controls_pad_pause_out">Pause and resume.</string>
+    <string name="controls_pad_quit_in">Select, or the back button</string>
+    <string name="controls_pad_quit_out">Asks whether to quit the match (A yes, B no).</string>
+
+    <string name="controls_ammo_menu_title">In the weapon menu</string>
+    <string name="controls_menu_browse_in">D-pad / tap</string>
+    <string name="controls_menu_browse_out">Browse the weapons.</string>
+    <string name="controls_menu_pick_in">A or X / tap</string>
+    <string name="controls_menu_pick_out">Pick the weapon.</string>
+    <string name="controls_menu_close_in">B or Y / tap outside</string>
+    <string name="controls_menu_close_out">Close the menu.</string>
+
+    <string name="controls_weapon_title">While a weapon is selected</string>
+    <string name="controls_weapon_timer_in">R1 / R2</string>
+    <string name="controls_weapon_timer_out">Set the fuse of grenades and mines (1 to 5 seconds).</string>
+    <string name="controls_weapon_bounce_in">L1</string>
+    <string name="controls_weapon_bounce_out">Set how much the projectile bounces.</string>
+
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System language</string>
 </resources>
