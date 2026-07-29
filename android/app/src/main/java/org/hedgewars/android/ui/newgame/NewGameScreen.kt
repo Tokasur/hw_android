@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -92,6 +93,19 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     // pack) simply resolve to no script at launch.
     val styles = remember { missions.gameStyles() }
     var styleName by rememberSaveable { mutableStateOf("") }
+    // A style's .cfg can pin the scheme/weapons (desktop rule): apply the
+    // recommendation when the style changes and lock the pickers, so
+    // combos like Racer + King Mode can't break the match.
+    val selectedStyle = styles.firstOrNull { it.title == styleName }
+    LaunchedEffect(styleName) {
+        val s = selectedStyle ?: return@LaunchedEffect
+        s.scheme?.let {
+            schemeName = if (it == MissionsRepository.GameStyle.LOCKED) Scheme.DEFAULT.name else it
+        }
+        s.weapons?.let {
+            weaponsName = if (it == MissionsRepository.GameStyle.LOCKED) WeaponSet.DEFAULT.name else it
+        }
+    }
     var hogCount by remember { mutableStateOf(4f) }
 
     // Custom schemes/weapon sets can appear or vanish while we're away in
@@ -160,7 +174,10 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                DropdownPicker("", schemeNames, schemeName, Modifier.weight(1f)) { schemeName = it }
+                DropdownPicker(
+                    "", schemeNames, schemeName, Modifier.weight(1f),
+                    enabled = selectedStyle?.scheme == null,
+                ) { schemeName = it }
                 HwChip("✎", selected = false, onClick = { nav.navigate("schemes") })
             }
 
@@ -169,7 +186,10 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                DropdownPicker("", weaponNames, weaponsName, Modifier.weight(1f)) { weaponsName = it }
+                DropdownPicker(
+                    "", weaponNames, weaponsName, Modifier.weight(1f),
+                    enabled = selectedStyle?.weapons == null,
+                ) { weaponsName = it }
                 HwChip("✎", selected = false, onClick = { nav.navigate("weaponSets") })
             }
 

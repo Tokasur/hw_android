@@ -45,15 +45,18 @@ class MissionsRepository(private val dataDir: File, userDataDir: File) {
             ?: emptyList()
     }
 
-    /** Regular multiplayer maps (preview.png without mission script). */
+    /**
+     * Maps offered in game setup. Shipped mission maps (map.lua) stay hidden
+     * as always — but a downloaded pack map is listed even when scripted
+     * (StarRace &co): the player installed it to play it, and the engine
+     * runs its script in a local match just like the desktop does.
+     */
     fun multiplayerMaps(): List<String> {
         val dir = File(dataDir, "Maps")
         val system = dir.listFiles { f -> f.isDirectory && !File(f, "map.lua").exists() }
             ?.map { it.name }
             ?: emptyList()
-        val fromPacks = packs.subdirs("Maps/")
-            .filterNot { packs.hasFile("Maps/$it/map.lua") }
-        return (system + fromPacks).distinct().sorted()
+        return (system + packs.subdirs("Maps/")).distinct().sorted()
     }
 
     fun themes(): List<String> {
@@ -64,17 +67,49 @@ class MissionsRepository(private val dataDir: File, userDataDir: File) {
         return (system + packs.dirsWithFile("Themes/", "theme.cfg")).distinct().sorted()
     }
 
+    /**
+     * A multiplayer style script plus the recommendations of its sibling
+     * .cfg (line 1 scheme, line 2 weapons — GameStyleModel.cpp rules):
+     * null = free choice ("*"), [GameStyle.LOCKED] = force Default, any
+     * other value = force that scheme/weapon set. Missing file or line
+     * means locked, like the desktop.
+     */
+    data class GameStyle(
+        val title: String,
+        val script: String,
+        val scheme: String?,
+        val weapons: String?,
+    ) {
+        companion object {
+            const val LOCKED = "locked"
+        }
+    }
+
     /** Multiplayer style scripts for local games (Scripts/Multiplayer). */
-    fun gameStyles(): List<Mission> {
+    fun gameStyles(): List<GameStyle> {
         val system = File(dataDir, "Scripts/Multiplayer")
             .listFiles { f -> f.extension == "lua" }
-            ?.map { Mission(pretty(it.nameWithoutExtension), "Scripts/Multiplayer/${it.name}") }
+            ?.map { it.nameWithoutExtension }
             ?: emptyList()
         val fromPacks = packs.fileNames("Scripts/Multiplayer/", ".lua")
-            .map { Mission(pretty(it), "Scripts/Multiplayer/$it.lua") }
-        return (system + fromPacks)
-            .distinctBy { it.script }
+        return (system + fromPacks).distinct()
+            .map { base ->
+                val (scheme, weapons) = styleCfg(base)
+                GameStyle(pretty(base), "Scripts/Multiplayer/$base.lua", scheme, weapons)
+            }
             .sortedBy { it.title.lowercase() }
+    }
+
+    private fun styleCfg(base: String): Pair<String?, String?> {
+        val rel = "Scripts/Multiplayer/$base.cfg"
+        val text = File(dataDir, rel).takeIf { it.isFile }?.readText()
+            ?: packs.readEntry(rel)?.toString(Charsets.UTF_8)
+        val lines = text?.lines()?.map { it.trim().replace('_', ' ') }.orEmpty()
+        fun norm(i: Int): String? {
+            val v = lines.getOrNull(i)?.takeIf { it.isNotEmpty() } ?: return GameStyle.LOCKED
+            return if (v == "*") null else v
+        }
+        return norm(0) to norm(1)
     }
 
     private fun luaMissions(rel: String): List<Mission> {

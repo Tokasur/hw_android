@@ -4,6 +4,7 @@ import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -24,48 +25,71 @@ class MissionsRepositoryMergeTest {
         return MissionsRepository(dataDir, userDataDir)
     }
 
-    private fun writePack(name: String, entries: List<String>) {
+    private fun writePack(name: String, entries: Map<String, String>) {
         ZipOutputStream(File(userDataDir, name).outputStream()).use { zip ->
-            for (e in entries) {
+            for ((e, content) in entries) {
                 zip.putNextEntry(ZipEntry(e))
-                zip.write("x".toByteArray())
+                zip.write(content.toByteArray())
                 zip.closeEntry()
             }
         }
     }
 
-    private fun systemDir(rel: String, marker: String? = null) {
-        val d = File(dataDir, rel)
-        d.mkdirs()
-        marker?.let { File(d, it).writeText("x") }
+    private fun systemFile(rel: String, content: String = "x") {
+        val f = File(dataDir, rel)
+        f.parentFile!!.mkdirs()
+        f.writeText(content)
     }
 
     @Test
     fun `themes merge system pack and loose content deduped and sorted`() {
         val r = repo()
-        systemDir("Themes/Nature", "theme.cfg")
-        writePack("P.hwp", listOf("Themes/Foo/theme.cfg", "Themes/Nature/theme.cfg"))
+        systemFile("Themes/Nature/theme.cfg")
+        writePack("P.hwp", mapOf("Themes/Foo/theme.cfg" to "x", "Themes/Nature/theme.cfg" to "x"))
         File(userDataDir, "Themes/Bar").mkdirs()
         File(userDataDir, "Themes/Bar/theme.cfg").writeText("x")
         assertEquals(listOf("Bar", "Foo", "Nature"), r.themes())
     }
 
     @Test
-    fun `pack maps with a mission script stay out of multiplayer maps`() {
+    fun `pack maps are listed even with a mission script, shipped ones stay hidden`() {
         val r = repo()
-        systemDir("Maps/Alpha")
-        writePack("P.hwp", listOf("Maps/Packy/preview.png", "Maps/Scripted/map.lua"))
-        assertEquals(listOf("Alpha", "Packy"), r.multiplayerMaps())
+        File(dataDir, "Maps/Alpha").mkdirs()
+        systemFile("Maps/Basketball/map.lua", "-- shipped mission map")
+        writePack("P.hwp", mapOf("Maps/Packy/preview.png" to "x", "Maps/Scripted/map.lua" to "-- lua"))
+        assertEquals(listOf("Alpha", "Packy", "Scripted"), r.multiplayerMaps())
     }
 
     @Test
-    fun `game styles merge packs and sort by pretty title`() {
+    fun `game styles read their cfg recommendations like the desktop`() {
         val r = repo()
-        systemDir("Scripts/Multiplayer")
-        File(dataDir, "Scripts/Multiplayer/WxW.lua").writeText("-- lua")
-        writePack("P.hwp", listOf("Scripts/Multiplayer/Ready_Timer.lua"))
-        val styles = r.gameStyles()
-        assertEquals(listOf("Ready Timer", "WxW"), styles.map { it.title })
-        assertEquals("Scripts/Multiplayer/Ready_Timer.lua", styles[0].script)
+        systemFile("Scripts/Multiplayer/Racer.lua", "-- lua")
+        systemFile("Scripts/Multiplayer/Racer.cfg", "Racer\nShoppa")
+        systemFile("Scripts/Multiplayer/Gravity.lua", "-- lua")
+        systemFile("Scripts/Multiplayer/Gravity.cfg", "*\n*")
+        systemFile("Scripts/Multiplayer/Frenzy.lua", "-- lua")
+        // Frenzy has no cfg: both recommendations fall back to locked.
+        writePack(
+            "P.hwp",
+            mapOf(
+                "Scripts/Multiplayer/Ready_Timer.lua" to "-- lua",
+                "Scripts/Multiplayer/Ready_Timer.cfg" to "The_Specialists\n*",
+            ),
+        )
+        val styles = r.gameStyles().associateBy { it.title }
+        assertEquals(
+            listOf("Frenzy", "Gravity", "Racer", "Ready Timer"),
+            r.gameStyles().map { it.title },
+        )
+        assertEquals("Racer", styles["Racer"]!!.scheme)
+        assertEquals("Shoppa", styles["Racer"]!!.weapons)
+        assertNull(styles["Gravity"]!!.scheme)
+        assertNull(styles["Gravity"]!!.weapons)
+        assertEquals(MissionsRepository.GameStyle.LOCKED, styles["Frenzy"]!!.scheme)
+        assertEquals(MissionsRepository.GameStyle.LOCKED, styles["Frenzy"]!!.weapons)
+        // Pack cfg is read from the zip; "_" becomes a space.
+        assertEquals("The Specialists", styles["Ready Timer"]!!.scheme)
+        assertNull(styles["Ready Timer"]!!.weapons)
+        assertEquals("Scripts/Multiplayer/Ready_Timer.lua", styles["Ready Timer"]!!.script)
     }
 }
