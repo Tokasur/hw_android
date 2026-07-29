@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Required for the loopback TCP socket between frontend and engine
-         (engine IPC). No data ever leaves the device in this version:
-         there is no online play, no telemetry, no ads. -->
+         (engine IPC) and for downloading community content packs over
+         HTTPS from hedgewars.org (the in-app "Downloadable content"
+         screen). No telemetry, no ads. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Gamepads are optional -->

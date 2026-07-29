@@ -41,6 +41,7 @@ import org.hedgewars.android.config.TeamSlot
 import org.hedgewars.android.config.WeaponSet
 import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.MissionsRepository
+import org.hedgewars.android.data.PackContentIndex
 import org.hedgewars.android.data.SchemesRepository
 import org.hedgewars.android.data.TeamsRepository
 import org.hedgewars.android.data.WeaponSetsRepository
@@ -72,6 +73,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     val schemesRepo = remember { SchemesRepository(context) }
     val weaponsRepo = remember { WeaponSetsRepository(context) }
     val missions = remember { MissionsRepository(paths) }
+    val packIndex = remember { PackContentIndex(paths.userDataDir) }
     val launcher = remember { GameLauncher(context) }
 
     val allTeams = remember { teamsRepo.list() }
@@ -86,6 +88,10 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     var theme by remember { mutableStateOf(if ("Nature" in themes) "Nature" else themes.first()) }
     var schemeName by rememberSaveable { mutableStateOf(Scheme.DEFAULT.name) }
     var weaponsName by rememberSaveable { mutableStateOf(WeaponSet.DEFAULT.name) }
+    // Game style (Scripts/Multiplayer): "" = none. Unknown names (a deleted
+    // pack) simply resolve to no script at launch.
+    val styles = remember { missions.gameStyles() }
+    var styleName by rememberSaveable { mutableStateOf("") }
     var hogCount by remember { mutableStateOf(4f) }
 
     // Custom schemes/weapon sets can appear or vanish while we're away in
@@ -136,6 +142,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
             HwPanel(Modifier.fillMaxWidth()) {
                 MapPicker(
                     dataDir = paths.dataDir,
+                    packIndex = packIndex,
                     kind = mapKind, onKind = { mapKind = it },
                     namedMaps = namedMaps, selectedMap = selectedMap, onSelectMap = { selectedMap = it },
                     featureSize = featureSize, onFeatureSize = { featureSize = it },
@@ -145,7 +152,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
 
             SectionHeader("Theme")
             HwPanel(Modifier.fillMaxWidth()) {
-                ThemePicker(paths.dataDir, themes, theme) { theme = it }
+                ThemePicker(paths.dataDir, packIndex, themes, theme) { theme = it }
             }
 
             SectionHeader(stringResource(R.string.local_game_scheme))
@@ -165,6 +172,14 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 DropdownPicker("", weaponNames, weaponsName, Modifier.weight(1f)) { weaponsName = it }
                 HwChip("✎", selected = false, onClick = { nav.navigate("weaponSets") })
             }
+
+            SectionHeader(stringResource(R.string.local_game_style))
+            val styleNone = stringResource(R.string.local_game_style_none)
+            DropdownPicker(
+                "",
+                listOf(styleNone) + styles.map { it.title },
+                styleName.ifEmpty { styleNone },
+            ) { picked -> styleName = if (picked == styleNone) "" else picked }
 
             SectionHeader("Hedgehogs per team: ${hogCount.toInt()}")
             Slider(value = hogCount, onValueChange = { hogCount = it }, valueRange = 1f..8f, steps = 6)
@@ -203,6 +218,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                         teams = teams,
                         scheme = schemesRepo.resolve(schemeName),
                         weapons = weaponsRepo.resolve(weaponsName),
+                        script = styles.firstOrNull { it.title == styleName }?.script,
                         map = map,
                         theme = theme,
                         seed = seed,

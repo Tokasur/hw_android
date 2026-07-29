@@ -28,6 +28,7 @@ import java.io.File
 import org.hedgewars.android.R
 import org.hedgewars.android.config.Team
 import org.hedgewars.android.data.GamePaths
+import org.hedgewars.android.data.PackContentIndex
 import org.hedgewars.android.data.TeamsRepository
 import org.hedgewars.android.ui.common.DropdownPicker
 
@@ -36,6 +37,7 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
     val context = LocalContext.current
     val repo = remember { TeamsRepository(context) }
     val paths = remember { GamePaths(context) }
+    val packs = remember { PackContentIndex(paths.userDataDir) }
     val original = remember { teamName?.let { repo.get(it) } }
 
     var name by remember { mutableStateOf(original?.name ?: "") }
@@ -48,17 +50,21 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
     var flag by remember { mutableStateOf(original?.flag ?: "hedgewars") }
     var hat by remember { mutableStateOf(original?.hat ?: "NoHat") }
 
-    val graves = remember { dataNames(paths, "Graphics/Graves", ".png") }
+    val graves = remember { dataNames(paths, packs, "Graphics/Graves", ".png") }
     val forts = remember {
-        File(paths.dataDir, "Forts").listFiles { f -> f.name.endsWith("L.png") }
-            ?.map { it.name.removeSuffix("L.png") }?.distinct()?.sorted() ?: listOf("Plane")
+        val system = File(paths.dataDir, "Forts").listFiles { f -> f.name.endsWith("L.png") }
+            ?.map { it.name.removeSuffix("L.png") } ?: emptyList()
+        (system + packs.fileNames("Forts/", "L.png")).distinct().sorted()
+            .ifEmpty { listOf("Plane") }
     }
     val voices = remember {
-        File(paths.dataDir, "Sounds/voices").listFiles { f -> f.isDirectory }
-            ?.map { it.name }?.sorted() ?: listOf("Default")
+        val system = File(paths.dataDir, "Sounds/voices").listFiles { f -> f.isDirectory }
+            ?.map { it.name } ?: emptyList()
+        (system + packs.subdirs("Sounds/voices/")).distinct().sorted()
+            .ifEmpty { listOf("Default") }
     }
-    val flags = remember { dataNames(paths, "Graphics/Flags", ".png") }
-    val hats = remember { dataNames(paths, "Graphics/Hats", ".png") }
+    val flags = remember { dataNames(paths, packs, "Graphics/Flags", ".png") }
+    val hats = remember { dataNames(paths, packs, "Graphics/Hats", ".png") }
 
     Column(
         modifier = Modifier
@@ -132,7 +138,13 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
     }
 }
 
-private fun dataNames(paths: GamePaths, rel: String, suffix: String): List<String> =
-    File(paths.dataDir, rel).listFiles { f -> f.name.endsWith(suffix) }
-        ?.map { it.name.removeSuffix(suffix) }?.sorted()
-        ?: emptyList()
+private fun dataNames(
+    paths: GamePaths,
+    packs: PackContentIndex,
+    rel: String,
+    suffix: String,
+): List<String> {
+    val system = File(paths.dataDir, rel).listFiles { f -> f.name.endsWith(suffix) }
+        ?.map { it.name.removeSuffix(suffix) } ?: emptyList()
+    return (system + packs.fileNames("$rel/", suffix)).distinct().sorted()
+}

@@ -234,4 +234,23 @@
         <item>Minigun</item>
         <item>Sentry Bot</item>
     </string-array>
+
+    <!-- Contenu téléchargeable -->
+    <string name="menu_dlc">Contenu téléchargeable</string>
+    <string name="dlc_title">Contenu téléchargeable</string>
+    <string name="dlc_installed_header">Paquets installés</string>
+    <string name="dlc_installed_empty">Aucun paquet installé pour le moment.</string>
+    <string name="dlc_catalog_header">Catalogue communautaire</string>
+    <string name="dlc_loading">Chargement du catalogue…</string>
+    <string name="dlc_error_offline">Impossible de charger le catalogue. Vérifiez votre connexion Internet.</string>
+    <string name="dlc_install">Installer</string>
+    <string name="dlc_installed_chip">Installé ✓</string>
+    <string name="dlc_all_downloads">Tous les téléchargements</string>
+    <string name="dlc_download_failed">Échec du téléchargement : %1$s</string>
+    <string name="dlc_delete_confirm_title">Supprimer ce paquet ?</string>
+    <string name="dlc_delete_confirm_text">%1$s sera retiré du jeu.</string>
+    <string name="dlc_next_match_note">Le contenu installé est actif dès la prochaine partie.</string>
+    <string name="common_cancel">Annuler</string>
+    <string name="local_game_style">Style de jeu</string>
+    <string name="local_game_style_none">Aucun</string>
 </resources>

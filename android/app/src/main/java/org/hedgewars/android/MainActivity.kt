@@ -24,6 +24,7 @@ import org.hedgewars.android.game.LastLaunch
 import org.hedgewars.android.ui.error.EngineErrorDialog
 import org.hedgewars.android.ui.about.AboutScreen
 import org.hedgewars.android.ui.about.ControlsScreen
+import org.hedgewars.android.ui.dlc.DlcScreen
 import org.hedgewars.android.ui.install.InstallGate
 import org.hedgewars.android.ui.menu.HomeScreen
 import org.hedgewars.android.ui.missions.MissionsScreen
@@ -142,6 +143,7 @@ private fun AppNavigation() {
                 WeaponSetEditScreen(nav, entry.arguments?.getString("name"))
             }
             composable("weaponSetEdit") { WeaponSetEditScreen(nav, null) }
+            composable("dlc") { DlcScreen(nav) }
             composable("settings") { SettingsScreen(nav) }
             composable("about") { AboutScreen(nav) }
             composable("controls") { ControlsScreen(nav) }

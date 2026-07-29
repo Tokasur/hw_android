@@ -238,4 +238,23 @@
         <item>Minigun</item>
         <item>Sentry Bot</item>
     </string-array>
+
+    <!-- Downloadable content -->
+    <string name="menu_dlc">Downloadable content</string>
+    <string name="dlc_title">Downloadable content</string>
+    <string name="dlc_installed_header">Installed packs</string>
+    <string name="dlc_installed_empty">No packs installed yet.</string>
+    <string name="dlc_catalog_header">Community catalog</string>
+    <string name="dlc_loading">Loading catalog…</string>
+    <string name="dlc_error_offline">Couldn\'t load the catalog. Check your Internet connection.</string>
+    <string name="dlc_install">Install</string>
+    <string name="dlc_installed_chip">Installed ✓</string>
+    <string name="dlc_all_downloads">All downloads</string>
+    <string name="dlc_download_failed">Download failed: %1$s</string>
+    <string name="dlc_delete_confirm_title">Delete this pack?</string>
+    <string name="dlc_delete_confirm_text">%1$s will be removed from the game.</string>
+    <string name="dlc_next_match_note">Installed content is active from the next match.</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="local_game_style">Game style</string>
+    <string name="local_game_style_none">None</string>
 </resources>

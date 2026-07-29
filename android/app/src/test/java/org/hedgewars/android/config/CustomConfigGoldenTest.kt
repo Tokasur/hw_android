@@ -85,6 +85,17 @@ class CustomConfigGoldenTest {
     }
 
     @Test
+    fun `game style emits escript right after the game type token`() {
+        val with = ConfigSerializer.localGame(
+            config(scheme, weapons).copy(script = "Scripts/Multiplayer/WxW.lua")
+        )
+        assertEquals("TL", with[0])
+        assertEquals("escript Scripts/Multiplayer/WxW.lua", with[1])
+        val without = ConfigSerializer.localGame(config(scheme, weapons))
+        assertFalse(without.any { it.startsWith("escript") })
+    }
+
+    @Test
     fun `json persistence is transparent to the engine`() {
         val schemes = SchemesRepository(tmp.newFolder())
         val weaponSets = WeaponSetsRepository(tmp.newFolder())

@@ -151,6 +151,7 @@ fun HwChip(
     text: String,
     selected: Boolean,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(50)
@@ -159,14 +160,18 @@ fun HwChip(
             .clip(shape)
             .background(if (selected) HwColors.Gold else HwColors.Panel)
             .border(BorderStroke(1.dp, if (selected) HwColors.Gold else HwColors.Outline), shape)
-            .clickable(onClick = onClick)
+            .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text,
             style = MaterialTheme.typography.labelLarge,
-            color = if (selected) HwColors.IndigoDeep else HwColors.TextLight,
+            color = when {
+                !enabled -> HwColors.TextMuted
+                selected -> HwColors.IndigoDeep
+                else -> HwColors.TextLight
+            },
         )
     }
 }

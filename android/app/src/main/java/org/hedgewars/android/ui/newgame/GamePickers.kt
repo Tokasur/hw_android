@@ -25,8 +25,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.hedgewars.android.config.MapChoice
 import org.hedgewars.android.config.MapGen
-import org.hedgewars.android.ui.common.DiskImage
+import org.hedgewars.android.data.PackContentIndex
 import org.hedgewars.android.ui.common.HwChip
+import org.hedgewars.android.ui.common.PackImage
 import org.hedgewars.android.ui.common.SelectableTile
 import org.hedgewars.android.ui.theme.HwColors
 import java.io.File
@@ -47,6 +48,7 @@ fun MapKind.toGen(): MapGen = when (this) {
 @Composable
 fun MapPicker(
     dataDir: File,
+    packIndex: PackContentIndex,
     kind: MapKind,
     onKind: (MapKind) -> Unit,
     namedMaps: List<String>,
@@ -73,7 +75,9 @@ fun MapPicker(
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(namedMaps, key = { it }) { name ->
                         MapTile(
-                            preview = File(dataDir, "Maps/$name/preview.png"),
+                            previewRel = "Maps/$name/preview.png",
+                            dataDir = dataDir,
+                            packIndex = packIndex,
                             name = name,
                             selected = name == selectedMap,
                             onClick = { onSelectMap(name) },
@@ -106,14 +110,23 @@ fun MapPicker(
 }
 
 @Composable
-private fun MapTile(preview: File, name: String, selected: Boolean, onClick: () -> Unit) {
+private fun MapTile(
+    previewRel: String,
+    dataDir: File,
+    packIndex: PackContentIndex,
+    name: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(140.dp),
     ) {
         SelectableTile(selected = selected, onClick = onClick, modifier = Modifier.fillMaxWidth().aspectRatio(2f)) {
-            DiskImage(
-                file = preview,
+            PackImage(
+                rel = previewRel,
+                dataDir = dataDir,
+                index = packIndex,
                 modifier = Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop,
                 placeholder = { Text("…", color = HwColors.TextMuted, modifier = Modifier.padding(8.dp)) },
@@ -135,6 +148,7 @@ private fun MapTile(preview: File, name: String, selected: Boolean, onClick: () 
 @Composable
 fun ThemePicker(
     dataDir: File,
+    packIndex: PackContentIndex,
     themes: List<String>,
     selected: String,
     onSelect: (String) -> Unit,
@@ -150,8 +164,10 @@ fun ThemePicker(
                     onClick = { onSelect(theme) },
                     modifier = Modifier.size(72.dp),
                 ) {
-                    DiskImage(
-                        file = File(dataDir, "Themes/$theme/icon.png"),
+                    PackImage(
+                        rel = "Themes/$theme/icon.png",
+                        dataDir = dataDir,
+                        index = packIndex,
                         modifier = Modifier.size(72.dp).padding(8.dp),
                         contentScale = ContentScale.Fit,
                         placeholder = {
