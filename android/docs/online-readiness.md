@@ -167,6 +167,24 @@ Aucun n'est corrigé ici : ils ne se manifestent qu'avec plusieurs machines.
    apparente du code. Non corrigé ici — c'est un choix de gameplay amont, et le
    modifier changerait les trajectoires.
 
+## Tests à faire dès la première partie en réseau
+
+Ces cas ne se voient qu'avec deux machines et ne sont couverts par aucun test
+automatique. À dérouler avant toute partie publique.
+
+1. **Clients de langues différentes** (demandé par Darryl) : un joueur en
+   français, un en anglais, sur un **style de jeu scripté** (le mécanisme ne se
+   déclenche que si un script Lua est chargé — voir risque n° 2). Les deux
+   doivent finir la partie sans desync. Si ça desynchronise, la locale de partie
+   devra être imposée par l'hôte, exactement comme une démo impose la sienne.
+2. **Contenu inégal** : un joueur avec un pack téléchargé, l'autre sans. Vérifier
+   qu'on avertit **avant** de lancer, parce que le moteur, lui, meurt pendant la
+   génération du terrain (risque n° 1).
+3. Même paire de tests avec les deux appareils de Darryl (Pixel 9 et RG556),
+   donc deux ABI différentes — c'est aussi le test croisé arm64/armv7 du
+   correctif d'ABI.
+4. Un client qui quitte en cours de partie, et un qui met en pause.
+
 ## Questions ouvertes pour le chantier multijoueur
 
 - Serveur officiel (cross-play avec le PC) ou serveur dédié ? L'amont fournit
