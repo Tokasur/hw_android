@@ -198,47 +198,41 @@ réelle de son travail. À proposer en même temps que le reste.
 
 ## Le moteur est-il identique d'un appareil à l'autre ?
 
-C'est la question qui décide si le réseau peut marcher. Réponse : **oui entre
-appareils ARM, non garanti face à x86**.
+C'est la question qui décide si le réseau peut marcher. Réponse, après avoir
+tracé chaque conversion : **rien dans la simulation ne dépend de
+l'architecture.**
 
-Ce qui joue en notre faveur : la simulation n'utilise pas de nombres à virgule
-flottante. Tout passe par `hwFloat`, un format à virgule **fixe** (des entiers),
-et c'est précisément pour ça qu'il existe. Les entiers donnent le même résultat
-partout. Le moteur vérifie en plus le terrain au démarrage (trame `'M'`,
-`landcheck`) — deux clients qui ne génèrent pas le même sol le savent tout de
-suite.
+La simulation n'utilise aucun nombre à virgule flottante. Tout passe par
+`hwFloat`, un format à virgule **fixe** — des entiers 64 bits, manipulés côté
+Rust par `FixedPoint` — et c'est précisément pour ça qu'il existe. Les entiers
+donnent le même résultat sur n'importe quel processeur. Le moteur vérifie en
+plus le terrain au démarrage (trame `'M'`, `landcheck`) : deux clients qui ne
+génèrent pas le même sol le savent immédiatement.
 
-**L'exception trouvée**, et elle est réelle : `LineCollisionTest`
-(`hedgewars/uCollisions.pas`) calcule son point d'impact en virgule flottante,
-avec une variable déclarée `extended` :
+**Vérification faite** : les seuls appels à `hwFloat2Float` (le pont
+virgule fixe → flottant) du moteur sont, exhaustivement,
 
-```pascal
-realT := hwFloat2Float(t) / hwFloat2Float(dirNormSqr);
-cX := round(hwFloat2Float(oX) + realT * hwFloat2Float(dirX));
-```
+- `uAI.pas` / `uAIMisc.pas` — l'IA. Non synchronisée par construction : elle
+  tourne chez le propriétaire de l'équipe et ne produit que des commandes, qui
+  transitent, elles, sur le réseau.
+- `uGearsRender.pas`, `uVisualGearsList.pas`, `uTeams.pas:417` — rendu, effets
+  visuels, jauge de vent. Cosmétique.
+- `uCollisions.pas:250-252` — voir ci-dessous.
 
-Or `extended` **n'a pas la même précision selon l'architecture** — vérifié au
-compilateur : 10 octets (80 bits, x87) sur x86_64, 8 octets (double) sur
-aarch64. Un arrondi différent, c'est un pixel d'écart sur le point d'impact,
-donc des dégâts différents, donc un desync. Le chemin est atteint par le fusil
-à pompe (`ShotgunLineHitHelp`) et les armes qui poussent en ligne
-(`AmmoShoveLine`) — des armes courantes.
+**Le faux ami à connaître** : `LineCollisionTest` (`uCollisions.pas`) déclare
+une variable `extended`, dont la taille dépend de l'architecture — vérifié au
+compilateur, 10 octets (80 bits x87) sur x86_64 contre 8 (double) sur aarch64.
+De quoi faire peur, sauf que le résultat ne sert qu'à placer une étincelle
+d'impact (`vgtBulletHit`) et les traînées du couteau (`vgtStraightShot`), deux
+gears **visuels**. La décision « touché / pas touché » (`hasCollision`) et les
+dégâts, eux, sont calculés entièrement en virgule fixe quelques lignes plus
+haut. Aucun effet sur la synchronisation.
 
-Conséquences pratiques :
-
-- **arm64 ↔ arm64, arm64 ↔ armeabi-v7a** : sans risque de ce côté, les deux
-  ramènent `extended` à `double`. C'est le cas de tous les vrais téléphones.
-- **ARM ↔ x86_64** (émulateur, quelques Chromebooks) et **ARM ↔ PC** : risque
-  réel. À écarter du multijoueur, ou à corriger.
-- Correction possible de notre côté : déclarer `realT` en `double` plutôt qu'en
-  `extended`. Nos trois ABI deviendraient alors cohérentes entre elles — mais
-  notre moteur ne calculerait plus comme celui du PC, ce qui ferme la porte au
-  cross-play. C'est un choix à faire au début du chantier, pas avant.
-
-Ce qui reste non vérifié : aucune partie n'a encore été rejouée d'une
-architecture à l'autre. Le test décisif est simple et à faire tôt — enregistrer
-une démo sur un appareil, la rejouer sur un autre d'ABI différente, et vérifier
-l'absence de `Desync detected` dans `Logs/game0.log`.
+Ce qui reste à démontrer sur le terrain : aucune partie n'a encore été rejouée
+d'une architecture à l'autre. Le test est simple et vaut d'être fait tôt —
+enregistrer une démo sur un appareil, la rejouer sur un autre d'ABI différente,
+et vérifier l'absence de `Desync detected` dans `Logs/game0.log`. Il vaut
+surtout comme filet : c'est l'analyse ci-dessus qui porte la conclusion.
 
 ## Tests à faire dès la première partie en réseau
 
@@ -254,10 +248,9 @@ automatique. À dérouler avant toute partie publique.
    qu'on avertit **avant** de lancer, parce que le moteur, lui, meurt pendant la
    génération du terrain (risque n° 1).
 3. **Déterminisme entre architectures** : enregistrer une démo sur un appareil,
-   la rejouer sur un autre d'ABI différente, et vérifier `Logs/game0.log`. À
-   faire avant d'écrire la moindre ligne de réseau — c'est le socle. Voir la
-   section sur `extended` ci-dessus : entre appareils ARM ça devrait passer,
-   face à x86 non.
+   la rejouer sur un autre d'ABI différente, et vérifier `Logs/game0.log`.
+   L'analyse dit que ça doit passer (simulation en virgule fixe) ; ce test le
+   confirme sur le terrain pour le coût d'un aller-retour de fichier.
 4. Un client qui quitte en cours de partie, et un qui met en pause.
 
 ## Questions ouvertes pour le chantier multijoueur
