@@ -31,6 +31,7 @@ import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.PackContentIndex
 import org.hedgewars.android.data.TeamsRepository
 import org.hedgewars.android.ui.common.DropdownPicker
+import org.hedgewars.android.ui.common.safeBack
 
 @Composable
 fun TeamEditScreen(nav: NavController, teamName: String?) {
@@ -121,7 +122,7 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
                         flag = flag, hat = hat,
                     )
                 )
-                nav.popBackStack()
+                nav.safeBack()
             },
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.teams_save)) }
@@ -130,7 +131,7 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
             OutlinedButton(
                 onClick = {
                     repo.delete(original.name)
-                    nav.popBackStack()
+                    nav.safeBack()
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.teams_delete)) }

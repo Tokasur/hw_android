@@ -28,6 +28,7 @@ class GameLauncher(private val context: Context) {
     private val prefs = UserPrefs(context)
 
     fun launchLocalGame(cfg: GameConfig) {
+        lastLocalConfig = cfg
         launch(ConfigSerializer.localGame(cfg))
     }
 
@@ -36,12 +37,25 @@ class GameLauncher(private val context: Context) {
         launch(ConfigSerializer.missionGame(cfg), campaignTeam = cfg.team.name, campaignScope = scope)
     }
 
+    /**
+     * Plays back a recorded match: the same engine launch, except the demo's
+     * bytes are what the engine gets when it asks for a config (the recording
+     * already starts with the config it was made with).
+     */
+    fun launchReplay(demo: java.io.File) {
+        launch(emptyList(), replayPath = demo.absolutePath)
+    }
+
     private fun launch(
         config: List<String>,
         campaignTeam: String? = null,
         campaignScope: String? = null,
+        replayPath: String? = null,
     ) {
         ensureFreshGameProcess(context)
+        // Whatever the previous match left behind is stale from here on: the
+        // stats screen must never show the results of the game before this one.
+        org.hedgewars.android.engine.MatchRecords.sweep(context)
         paths.ensureUserDirs()
         BindsWriter.write(paths.settingsIni, prefs.gamepadBinds)
 
@@ -95,6 +109,7 @@ class GameLauncher(private val context: Context) {
             context, args.toList(), config,
             renderW = renderW, renderH = renderH,
             campaignTeam = campaignTeam, campaignScope = campaignScope,
+            replayPath = replayPath,
         ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         // Remembered so a crash-at-start can be relaunched automatically.
         LastLaunch.record(intent)
@@ -110,6 +125,15 @@ class GameLauncher(private val context: Context) {
 
     companion object {
         private const val TAG = "HWGameLauncher"
+
+        /**
+         * The last local match set up in this (menu) process, so the stats
+         * screen can offer "Play again". Deliberately in memory only: it is a
+         * convenience for the session, not saved state.
+         */
+        @Volatile
+        var lastLocalConfig: GameConfig? = null
+            private set
 
         /**
          * The ":game" process must be truly fresh before a match starts: SDL

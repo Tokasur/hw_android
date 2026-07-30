@@ -14,6 +14,7 @@ import org.hedgewars.android.R
 import org.hedgewars.android.config.Scheme
 import org.hedgewars.android.data.SchemesRepository
 import org.hedgewars.android.ui.common.PresetManagerScreen
+import org.hedgewars.android.ui.common.safeBack
 
 @Composable
 fun SchemesScreen(nav: NavController) {
@@ -33,7 +34,7 @@ fun SchemesScreen(nav: NavController) {
         customsHeader = stringResource(R.string.schemes_custom),
         presetNames = Scheme.PRESETS.map { it.name },
         customNames = customs.map { it.name },
-        onBack = { nav.popBackStack() },
+        onBack = { nav.safeBack() },
         onNew = { nav.navigate("schemeEdit") },
         onOpen = { nav.navigate("schemeEdit/${Uri.encode(it)}") },
         onDuplicate = { name ->

@@ -56,6 +56,7 @@ fun HomeScreen(nav: NavController) {
         HwButton(stringResource(R.string.menu_teams), { nav.navigate("teams") }, col)
         HwButton(stringResource(R.string.menu_dlc), { nav.navigate("dlc") }, col)
 
+        HwButton(stringResource(R.string.menu_replays), { nav.navigate("replays") }, col, primary = false)
         HwButton(stringResource(R.string.menu_settings), { nav.navigate("settings") }, col, primary = false)
         HwButton(stringResource(R.string.settings_controls_help), { nav.navigate("controls") }, col, primary = false)
         HwButton(stringResource(R.string.menu_about), { nav.navigate("about") }, col, primary = false)

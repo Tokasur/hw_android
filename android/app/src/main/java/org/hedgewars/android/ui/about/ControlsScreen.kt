@@ -19,6 +19,7 @@ import org.hedgewars.android.R
 import org.hedgewars.android.ui.common.HwPanel
 import org.hedgewars.android.ui.common.HwScreen
 import org.hedgewars.android.ui.common.SectionHeader
+import org.hedgewars.android.ui.common.safeBack
 import org.hedgewars.android.ui.theme.HwColors
 
 /**
@@ -28,7 +29,7 @@ import org.hedgewars.android.ui.theme.HwColors
  */
 @Composable
 fun ControlsScreen(nav: NavController) {
-    HwScreen(title = stringResource(R.string.controls_title), onBack = { nav.popBackStack() }) {
+    HwScreen(title = stringResource(R.string.controls_title), onBack = { nav.safeBack() }) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 
             SectionHeader(stringResource(R.string.controls_touch_title))

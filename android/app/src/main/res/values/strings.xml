@@ -31,6 +31,7 @@
     <string name="local_game_add_team">Add team</string>
     <string name="local_game_start">Start game</string>
     <string name="local_game_need_teams">Add at least two teams with different colors</string>
+    <string name="local_game_need_one_team">Create a team first</string>
     <string name="local_game_hogs_per_team">Hedgehogs per team</string>
     <string name="local_game_map">Map</string>
     <string name="local_game_map_random">Random map</string>
@@ -254,6 +255,17 @@
     <string name="local_game_style">Game style</string>
     <string name="local_game_style_none">None</string>
 
+    <!-- Map picker -->
+    <string name="map_kind_random">Random</string>
+    <string name="map_kind_maze">Maze</string>
+    <string name="map_kind_perlin">Perlin</string>
+    <string name="map_kind_forts">Forts</string>
+    <string name="map_kind_named">Map</string>
+    <string name="map_named_empty">No named maps installed</string>
+    <string name="map_new_seed">New seed</string>
+    <string name="map_terrain_size">Terrain size</string>
+    <string name="map_fort_distance">Distance between forts: %1$d</string>
+
     <!-- Controls reference -->
     <string name="controls_title">Controls</string>
     <string name="controls_touch_title">Touch</string>
@@ -317,4 +329,63 @@
 
     <string name="settings_language">Language</string>
     <string name="settings_language_system">System language</string>
+
+    <!-- End-of-match statistics -->
+    <string name="stats_title">Results</string>
+    <string name="stats_ranking_header">Ranking</string>
+    <string name="stats_details_header">Details</string>
+    <string name="stats_graph_header">Health graph</string>
+    <plurals name="stats_best_shot">
+        <item quantity="one">The best shot award was won by %1$s with %2$d pt.</item>
+        <item quantity="other">The best shot award was won by %1$s with %2$d pts.</item>
+    </plurals>
+    <plurals name="stats_best_killer">
+        <item quantity="one">The best killer is %1$s with %2$d kill in a turn.</item>
+        <item quantity="other">The best killer is %1$s with %2$d kills in a turn.</item>
+    </plurals>
+    <plurals name="stats_hogs_killed">
+        <item quantity="one">A total of %1$d hedgehog was killed during this round.</item>
+        <item quantity="other">A total of %1$d hedgehogs were killed during this round.</item>
+    </plurals>
+    <plurals name="stats_self_damage">
+        <item quantity="one">%1$s thought it\'s good to shoot their own hedgehogs for %2$d pt.</item>
+        <item quantity="other">%1$s thought it\'s good to shoot their own hedgehogs for %2$d pts.</item>
+    </plurals>
+    <plurals name="stats_self_kills">
+        <item quantity="one">%1$s killed %2$d of their own hedgehogs.</item>
+        <item quantity="other">%1$s killed %2$d of their own hedgehogs.</item>
+    </plurals>
+    <plurals name="stats_turn_skips">
+        <item quantity="one">%1$s was scared and skipped turn %2$d time.</item>
+        <item quantity="other">%1$s was scared and skipped turn %2$d times.</item>
+    </plurals>
+    <string name="stats_ever_after">With everyone having the same clan color, there was no reason to fight. And so the hedgehogs happily lived in peace ever after.</string>
+    <plurals name="stats_kills">
+        <item quantity="one">%1$d kill</item>
+        <item quantity="other">%1$d kills</item>
+    </plurals>
+    <plurals name="stats_points">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <plurals name="stats_crates">
+        <item quantity="one">%1$d crate</item>
+        <item quantity="other">%1$d crates</item>
+    </plurals>
+    <plurals name="stats_seconds">
+        <item quantity="one">%1$s second</item>
+        <item quantity="other">%1$s seconds</item>
+    </plurals>
+    <string name="stats_custom_points">%1$d %2$s</string>
+    <string name="stats_play_again">Play again</string>
+    <string name="stats_save_replay">Save replay</string>
+    <string name="stats_replay_saved">Replay saved</string>
+    <string name="stats_continue">Continue</string>
+
+    <!-- Replays -->
+    <string name="menu_replays">Replays</string>
+    <string name="replays_title">Replays</string>
+    <string name="replays_empty">No replays yet. Finish a local match and save it from the results screen.</string>
+    <string name="replays_delete_confirm_title">Delete this replay?</string>
+    <string name="replays_delete_confirm_text">%1$s will be removed.</string>
 </resources>

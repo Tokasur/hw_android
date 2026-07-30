@@ -207,7 +207,11 @@ fun SelectableTile(
  */
 @Composable
 fun DifficultyBadge(level: Int, modifier: Modifier = Modifier) {
-    val label = if (level <= 0) "👤 Human" else "★".repeat(level.coerceAtMost(5))
+    val label = if (level <= 0) {
+        "👤 " + androidx.compose.ui.res.stringResource(org.hedgewars.android.R.string.difficulty_0)
+    } else {
+        "★".repeat(level.coerceAtMost(5))
+    }
     Text(
         label,
         style = MaterialTheme.typography.labelLarge,

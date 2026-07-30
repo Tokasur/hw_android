@@ -26,6 +26,7 @@ import org.hedgewars.android.ui.common.HwPanel
 import org.hedgewars.android.ui.common.HwScreen
 import org.hedgewars.android.ui.common.SectionHeader
 import org.hedgewars.android.ui.common.ToggleRow
+import org.hedgewars.android.ui.common.safeBack
 
 @Composable
 fun SettingsScreen(nav: NavController) {
@@ -55,7 +56,7 @@ fun SettingsScreen(nav: NavController) {
         "fr" to "Français",
     )
 
-    HwScreen(title = stringResource(R.string.settings_title), onBack = { nav.popBackStack() }) {
+    HwScreen(title = stringResource(R.string.settings_title), onBack = { nav.safeBack() }) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 
             SectionHeader(stringResource(R.string.settings_audio))

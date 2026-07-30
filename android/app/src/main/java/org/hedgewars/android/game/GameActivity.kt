@@ -13,10 +13,13 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.WindowManager
 import org.hedgewars.android.R
+import org.hedgewars.android.config.StatsParser
 import org.hedgewars.android.data.CampaignStore
+import org.hedgewars.android.engine.DemoRecorder
 import org.hedgewars.android.engine.EngineLoader
 import org.hedgewars.android.engine.EngineOutcome
 import org.hedgewars.android.engine.GameConnection
+import org.hedgewars.android.engine.MatchRecords
 import org.libsdl.app.SDLActivity
 import org.libsdl.app.SDLSurface
 
@@ -37,6 +40,12 @@ class GameActivity : SDLActivity() {
 
     private var connection: GameConnection? = null
     private var quitDialog: AlertDialog? = null
+
+    /** Collects the engine's end-of-match stat frames for the menu process. */
+    private val statsParser = StatsParser()
+    private var demoRecorder: DemoRecorder? = null
+    private var replay = false
+    private var localMatch = false
 
     /**
      * Set when the system re-created this activity after a process death
@@ -261,6 +270,22 @@ class GameActivity : SDLActivity() {
         }, "hw-quit").start()
     }
 
+    /**
+     * Hands the finished match over to the menu process: its statistics, and
+     * the recording the player may want to keep. Called on the IPC thread.
+     */
+    private fun publishRecords() {
+        if (!localMatch) return
+        val report = statsParser.build(fromReplay = replay)
+        // A replay that stopped short of the real end only carries the
+        // per-turn health lines, no ranking — showing that as "results" would
+        // be misleading, so it just returns to the menu (as the desktop does).
+        if (report != null && (!replay || report.rankings.isNotEmpty())) {
+            MatchRecords.writeStats(this, report)
+        }
+        demoRecorder?.snapshot()?.let { MatchRecords.writeDemo(this, it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // A saved state means the system is resurrecting a match whose
         // process died — a legitimate launch from GameLauncher always starts
@@ -309,9 +334,24 @@ class GameActivity : SDLActivity() {
         android.system.Os.setenv("SDL_IOS_ORIENTATIONS", "LandscapeLeft LandscapeRight", true)
 
         val config = intent.getStringArrayExtra(EXTRA_CONFIG)?.toList() ?: emptyList()
-        val varStore = intent.getStringExtra(EXTRA_CAMPAIGN_TEAM)?.let { team ->
+        val campaignTeam = intent.getStringExtra(EXTRA_CAMPAIGN_TEAM)
+        val varStore = campaignTeam?.let { team ->
             CampaignStore(this, team, intent.getStringExtra(EXTRA_CAMPAIGN_SCOPE) ?: "")
         }
+
+        // Records of the PREVIOUS match are none of this one's business.
+        MatchRecords.sweep(this)
+
+        // Watching a replay: the recorded stream replaces the config.
+        val replayFile = intent.getStringExtra(EXTRA_REPLAY_PATH)?.let { java.io.File(it) }
+        replay = replayFile != null
+        // Stats and recordings are for local matches (and their replays) only:
+        // a mission's Lua script answers 'v?' queries that no replay can
+        // reproduce, and its stats belong to the mission, not to a scoreboard.
+        localMatch = campaignTeam == null
+        val recorder = if (localMatch && !replay) DemoRecorder() else null
+        demoRecorder = recorder
+
         EngineOutcome.markRunning(this)
         val conn = GameConnection(
             configCommands = { config },
@@ -327,7 +367,28 @@ class GameActivity : SDLActivity() {
                     EngineOutcome.markError(this@GameActivity, message)
                     runOnUiThread { if (!isFinishing) finishAndRemoveTask() }
                 }
+                override fun onStats(kind: Char, text: String) {
+                    statsParser.feed(kind, text)
+                }
+                /**
+                 * A replay ends by running out of recorded input: the engine
+                 * logs "End of input, halting now" and exits without the 'q'
+                 * a played match sends (uGame.pas DoGameTick). That is a clean
+                 * end here — publish the stats it did send and leave, or the
+                 * menu would read the silent exit as an engine crash.
+                 */
+                override fun onEngineGone() {
+                    if (!replay) return
+                    publishRecords()
+                    EngineOutcome.markFinished(this@GameActivity)
+                    runOnUiThread { if (!isFinishing) finishAndRemoveTask() }
+                }
                 override fun onGameFinished(interrupted: Boolean) {
+                    // A match played to the end has stats to show and a demo
+                    // worth keeping; a user quit ('Q') has neither. Both files
+                    // are written HERE, on the IPC thread, before the activity
+                    // finishes — onDestroy kills this process immediately.
+                    if (!interrupted) publishRecords()
                     EngineOutcome.markFinished(this@GameActivity)
                     // Deterministic return to the menu at match end instead of
                     // relying on SDL's own teardown ordering.
@@ -335,6 +396,8 @@ class GameActivity : SDLActivity() {
                 }
             },
             varStore = varStore,
+            recorder = recorder,
+            rawConfig = replayFile?.let { file -> { file.readBytes() } },
         )
         connection = conn
         conn.start()
@@ -406,6 +469,7 @@ class GameActivity : SDLActivity() {
         const val EXTRA_RENDER_H = "org.hedgewars.android.RENDER_H"
         const val EXTRA_CAMPAIGN_TEAM = "org.hedgewars.android.CAMPAIGN_TEAM"
         const val EXTRA_CAMPAIGN_SCOPE = "org.hedgewars.android.CAMPAIGN_SCOPE"
+        const val EXTRA_REPLAY_PATH = "org.hedgewars.android.REPLAY_PATH"
 
         fun intent(
             context: Context,
@@ -416,6 +480,8 @@ class GameActivity : SDLActivity() {
             renderH: Int = 0,
             campaignTeam: String? = null,
             campaignScope: String? = null,
+            /** Demo file to replay instead of playing a new match. */
+            replayPath: String? = null,
         ): Intent =
             Intent(context, GameActivity::class.java)
                 .putExtra(EXTRA_ENGINE_ARGS, engineArgs.toTypedArray())
@@ -424,5 +490,6 @@ class GameActivity : SDLActivity() {
                 .putExtra(EXTRA_RENDER_H, renderH)
                 .putExtra(EXTRA_CAMPAIGN_TEAM, campaignTeam)
                 .putExtra(EXTRA_CAMPAIGN_SCOPE, campaignScope)
+                .putExtra(EXTRA_REPLAY_PATH, replayPath)
     }
 }

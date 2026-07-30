@@ -33,6 +33,7 @@ import org.hedgewars.android.ui.common.NumberStepperRow
 import org.hedgewars.android.ui.common.SectionHeader
 import org.hedgewars.android.ui.common.ToggleRow
 import org.hedgewars.android.ui.common.jsonSaver
+import org.hedgewars.android.ui.common.safeBack
 
 /** One boolean rule of the scheme: its label and its field accessors. */
 private class Mod(
@@ -112,7 +113,9 @@ fun SchemeEditScreen(nav: NavController, schemeName: String?) {
     val repo = remember { SchemesRepository(context) }
     val original = remember { schemeName?.let { repo.get(it) } }
 
-    // Asked to edit something that no longer exists: just leave.
+    // Asked to edit something that no longer exists: just leave. Deliberately
+    // a bare pop, not safeBack(): this fires while the screen is still
+    // *entering*, so the entry isn't RESUMED yet and safeBack would swallow it.
     if (schemeName != null && original == null) {
         LaunchedEffect(Unit) { nav.popBackStack() }
         return
@@ -132,7 +135,7 @@ fun SchemeEditScreen(nav: NavController, schemeName: String?) {
 
     HwScreen(
         title = stringResource(if (original == null) R.string.schemes_new else R.string.schemes_edit),
-        onBack = { nav.popBackStack() },
+        onBack = { nav.safeBack() },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
@@ -192,7 +195,7 @@ fun SchemeEditScreen(nav: NavController, schemeName: String?) {
                     val toSave = scheme.copy(name = scheme.name.trim())
                     if (original != null && original.name != toSave.name) repo.delete(original.name)
                     repo.save(toSave)
-                    nav.popBackStack()
+                    nav.safeBack()
                 },
             )
             if (original != null) {
@@ -201,7 +204,7 @@ fun SchemeEditScreen(nav: NavController, schemeName: String?) {
                     primary = false,
                     onClick = {
                         repo.delete(original.name)
-                        nav.popBackStack()
+                        nav.safeBack()
                     },
                 )
             }

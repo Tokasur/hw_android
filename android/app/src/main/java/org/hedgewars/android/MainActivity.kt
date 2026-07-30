@@ -19,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 import org.hedgewars.android.audio.MenuMusic
 import org.hedgewars.android.engine.EngineOutcome
 import org.hedgewars.android.engine.GameProcessExitInfo
+import org.hedgewars.android.engine.MatchRecords
 import org.hedgewars.android.game.GameLauncher
 import org.hedgewars.android.game.LastLaunch
 import org.hedgewars.android.ui.error.EngineErrorDialog
@@ -30,9 +31,12 @@ import org.hedgewars.android.ui.menu.HomeScreen
 import org.hedgewars.android.ui.missions.MissionsScreen
 import org.hedgewars.android.ui.newgame.NewGameMode
 import org.hedgewars.android.ui.newgame.NewGameScreen
+import org.hedgewars.android.ui.replays.ReplaysScreen
 import org.hedgewars.android.ui.schemes.SchemeEditScreen
 import org.hedgewars.android.ui.schemes.SchemesScreen
 import org.hedgewars.android.ui.settings.SettingsScreen
+import org.hedgewars.android.ui.stats.StatsHolder
+import org.hedgewars.android.ui.stats.StatsScreen
 import org.hedgewars.android.ui.weapons.WeaponSetEditScreen
 import org.hedgewars.android.ui.weapons.WeaponSetsScreen
 import org.hedgewars.android.ui.teams.TeamEditScreen
@@ -68,7 +72,11 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        MenuMusic.stop()
+        // A rotation stops and recreates this activity; cutting the music
+        // there restarted the track from the top on every turn of the device.
+        // The player is process-global, so simply leaving it running keeps the
+        // music seamless (onStart's start() is idempotent).
+        if (!isChangingConfigurations) MenuMusic.stop()
         super.onStop()
     }
 }
@@ -115,7 +123,18 @@ private fun AppNavigation() {
             else -> {
                 // Menu settled cleanly (no failure): nothing may relaunch.
                 LastLaunch.clear()
+                // A match played to the end left its statistics behind (the
+                // ":game" process writes them just before it dies). Reading
+                // them consumes them, so this fires exactly once per match.
+                MatchRecords.consumeStats(context)?.let { report ->
+                    StatsHolder.report = report
+                    nav.navigate("stats")
+                }
             }
+        }
+        if (failure != null) {
+            // A failed match has nothing to show and nothing worth replaying.
+            MatchRecords.sweep(context)
         }
         onPauseOrDispose { }
     }
@@ -150,6 +169,8 @@ private fun AppNavigation() {
             }
             composable("weaponSetEdit") { WeaponSetEditScreen(nav, null) }
             composable("dlc") { DlcScreen(nav) }
+            composable("stats") { StatsScreen(nav) }
+            composable("replays") { ReplaysScreen(nav) }
             composable("settings") { SettingsScreen(nav) }
             composable("about") { AboutScreen(nav) }
             composable("controls") { ControlsScreen(nav) }

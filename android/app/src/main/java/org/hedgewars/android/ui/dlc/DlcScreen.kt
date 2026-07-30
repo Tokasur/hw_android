@@ -45,6 +45,7 @@ import org.hedgewars.android.ui.common.HwChip
 import org.hedgewars.android.ui.common.HwPanel
 import org.hedgewars.android.ui.common.HwScreen
 import org.hedgewars.android.ui.common.SectionHeader
+import org.hedgewars.android.ui.common.safeBack
 import org.hedgewars.android.ui.theme.HwColors
 
 private sealed interface CatalogState {
@@ -120,7 +121,7 @@ fun DlcScreen(nav: NavController) {
 
     HwScreen(
         title = stringResource(R.string.dlc_title),
-        onBack = { nav.popBackStack() },
+        onBack = { nav.safeBack() },
         scroll = false,
     ) {
         LazyColumn(

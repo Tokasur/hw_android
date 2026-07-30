@@ -6,6 +6,8 @@ enum class MapGen(val id: Int) {
     MAZE(1),
     PERLIN(2),
     // DRAWN(3) — hand-drawn maps are not supported in this port yet
+    /** One symmetric fort per clan; feature_size is the distance between them. */
+    FORTS(4),
 }
 
 sealed class MapChoice {

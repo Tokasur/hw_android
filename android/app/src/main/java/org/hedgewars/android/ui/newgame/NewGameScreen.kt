@@ -54,6 +54,7 @@ import org.hedgewars.android.ui.common.HwChip
 import org.hedgewars.android.ui.common.HwPanel
 import org.hedgewars.android.ui.common.HwScreen
 import org.hedgewars.android.ui.common.SectionHeader
+import org.hedgewars.android.ui.common.safeBack
 import org.hedgewars.android.ui.theme.HwColors
 
 enum class NewGameMode { QUICK, MULTI }
@@ -85,6 +86,9 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     var mapKind by remember { mutableStateOf(MapKind.RANDOM) }
     var selectedMap by remember { mutableStateOf(namedMaps.firstOrNull()) }
     var featureSize by remember { mutableStateOf(50f) }
+    // Forts reuse e$feature_size as the gap between forts; the desktop keeps a
+    // separate 1..25 slider for it, so we keep a separate value too.
+    var fortDistance by remember { mutableStateOf(12f) }
     var seed by remember { mutableStateOf(GameConfig.newSeed()) }
     var theme by remember { mutableStateOf(if ("Nature" in themes) "Nature" else themes.first()) }
     var schemeName by rememberSaveable { mutableStateOf(Scheme.DEFAULT.name) }
@@ -134,12 +138,14 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
         }
     }
 
-    val title = if (mode == NewGameMode.QUICK) "Quick game" else "Local multiplayer"
+    val title = stringResource(
+        if (mode == NewGameMode.QUICK) R.string.quick_game_title else R.string.local_game_title
+    )
 
-    HwScreen(title = title, onBack = { nav.popBackStack() }) {
+    HwScreen(title = title, onBack = { nav.safeBack() }) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
 
-            SectionHeader("Teams")
+            SectionHeader(stringResource(R.string.menu_teams))
             HwPanel(Modifier.fillMaxWidth()) {
                 if (mode == NewGameMode.QUICK) {
                     QuickTeams(
@@ -152,7 +158,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 }
             }
 
-            SectionHeader("Map")
+            SectionHeader(stringResource(R.string.local_game_map))
             HwPanel(Modifier.fillMaxWidth()) {
                 MapPicker(
                     dataDir = paths.dataDir,
@@ -160,11 +166,12 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                     kind = mapKind, onKind = { mapKind = it },
                     namedMaps = namedMaps, selectedMap = selectedMap, onSelectMap = { selectedMap = it },
                     featureSize = featureSize, onFeatureSize = { featureSize = it },
+                    fortDistance = fortDistance, onFortDistance = { fortDistance = it },
                     seed = seed, onReseed = { seed = GameConfig.newSeed() },
                 )
             }
 
-            SectionHeader("Theme")
+            SectionHeader(stringResource(R.string.local_game_theme))
             HwPanel(Modifier.fillMaxWidth()) {
                 ThemePicker(paths.dataDir, packIndex, themes, theme) { theme = it }
             }
@@ -201,21 +208,29 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 styleName.ifEmpty { styleNone },
             ) { picked -> styleName = if (picked == styleNone) "" else picked }
 
-            SectionHeader("Hedgehogs per team: ${hogCount.toInt()}")
+            SectionHeader(
+                stringResource(R.string.local_game_hogs_per_team) + ": ${hogCount.toInt()}"
+            )
             Slider(value = hogCount, onValueChange = { hogCount = it }, valueRange = 1f..8f, steps = 6)
 
             Spacer(Modifier.height(8.dp))
-            HwButton(if (mode == NewGameMode.QUICK) "Fight!" else "Start", onClick = {
+            val startLabel = stringResource(
+                if (mode == NewGameMode.QUICK) R.string.quick_game_start else R.string.local_game_start
+            )
+            HwButton(startLabel, onClick = {
                 val map: MapChoice = if (mapKind == MapKind.NAMED) {
                     selectedMap?.let { MapChoice.Named(it) } ?: MapChoice.Generated()
                 } else {
-                    MapChoice.Generated(mapGen = mapKind.toGen(), featureSize = featureSize.toInt())
+                    MapChoice.Generated(
+                        mapGen = mapKind.toGen(),
+                        featureSize = if (mapKind == MapKind.FORTS) fortDistance.toInt() else featureSize.toInt(),
+                    )
                 }
                 val teams: List<TeamSlot> = when (mode) {
                     NewGameMode.QUICK -> {
                         val player = allTeams.firstOrNull { !it.isCpu } ?: allTeams.firstOrNull()
                         if (player == null) {
-                            Toast.makeText(context, "Create a team first", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, R.string.local_game_need_one_team, Toast.LENGTH_LONG).show()
                             return@HwButton
                         }
                         val cpu = allTeams.firstOrNull { it.name != player.name }
@@ -227,7 +242,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                     }
                     NewGameMode.MULTI -> {
                         if (slots.size < 2 || slots.map { it.colorIndex }.toSet().size < 2) {
-                            Toast.makeText(context, "Need at least two teams with different colors", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, R.string.local_game_need_teams, Toast.LENGTH_LONG).show()
                             return@HwButton
                         }
                         slots.map { it.copy(hogCount = hogCount.toInt()) }
@@ -262,7 +277,11 @@ private fun QuickTeams(playerName: String, aiDifficulty: Int, onDifficulty: (Int
             ColorDot(1)
             Text("  Robots (CPU)", color = HwColors.TextLight, style = MaterialTheme.typography.titleMedium)
         }
-        Text("AI difficulty", color = HwColors.TextMuted, style = MaterialTheme.typography.bodySmall)
+        Text(
+            stringResource(R.string.quick_game_difficulty),
+            color = HwColors.TextMuted,
+            style = MaterialTheme.typography.bodySmall,
+        )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (level in 1..5) {
                 HwChip("★".repeat(level), aiDifficulty == level) { onDifficulty(level) }
@@ -299,7 +318,7 @@ private fun MultiTeams(slots: androidx.compose.runtime.snapshots.SnapshotStateLi
             }
         }
         if (slots.size < 8) {
-            HwChip("+ Add team", selected = false, onClick = {
+            HwChip("+ " + stringResource(R.string.local_game_add_team), selected = false, onClick = {
                 val usedColors = slots.map { it.colorIndex }.toSet()
                 val color = (0 until Team.COLORS.size).firstOrNull { it !in usedColors } ?: 0
                 slots.add(TeamSlot(Team.default("Team ${slots.size + 1}", "Hog", difficulty = 3), colorIndex = color))

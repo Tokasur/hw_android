@@ -55,6 +55,23 @@ class ConfigSerializerTest {
     }
 
     @Test
+    fun `forts map sends mapgen 4 with the fort distance and no maze size`() {
+        val cmds = ConfigSerializer.localGame(
+            defaultConfig().copy(map = MapChoice.Generated(mapGen = MapGen.FORTS, featureSize = 12))
+        )
+        assertTrue(cmds.contains("e\$mapgen 4"))
+        // Forts reuse feature_size as the gap between forts.
+        assertTrue(cmds.contains("e\$feature_size 12"))
+        assertFalse(cmds.any { it.startsWith("emap") })
+        assertFalse(cmds.any { it.startsWith("e\$maze_size") })
+        // The engine ORs gfDivideTeams (0x10) in itself for mgForts
+        // (uLand.pas MakeFortsMap): sending it would double up on the desktop's
+        // own behaviour, which never sets it either.
+        val flags = cmds.first { it.startsWith("e\$gmflags ") }.removePrefix("e\$gmflags ").toInt()
+        assertEquals(0, flags and 0x10)
+    }
+
+    @Test
     fun `named map sends emap`() {
         val cmds = ConfigSerializer.localGame(
             defaultConfig().copy(map = MapChoice.Named("Bath"))
