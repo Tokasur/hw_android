@@ -11,6 +11,32 @@ one device), with touch controls and gamepad support. Online multiplayer is
 not part of v1 (the engine does not support it on mobile yet); the groundwork
 and the path to it are described below.
 
+## What the frontend offers
+
+* **Quick game** against the CPU and **local multiplayer** for 2–8 teams on one
+  device, each seat human or CPU (5 AI levels) — pick which of your teams takes
+  a seat, its clan colour and its role.
+* **Teams**: create and edit teams (8 hedgehog names, hat, grave, fort, voice,
+  flag); a team with no fort of its own gets a different one in every forts
+  match, as the desktop does.
+* **Maps**: random, maze, perlin, **forts** (with the desktop's fort-distance
+  slider) or any named map, plus theme and seed.
+* **Rules**: the desktop's 17 game schemes and 13 weapon sets, editable, plus
+  the multiplayer **game styles** (a style's `.cfg` pins its scheme and weapon
+  set, as on the desktop).
+* **Missions**: training, challenges, scenarios and campaigns, with campaign
+  progress persisted per team.
+* **Downloadable content**: an in-app manager for the packs published on
+  <https://hedgewars.org/content.html> — install, remove, and their maps,
+  themes, hats, forts, voices and scripts appear in every picker (the desktop
+  frontend has no such manager).
+* **End-of-match results**: the winner, the medalled ranking, the notable
+  moments and the clans' health curves — the engine streams all of it and the
+  desktop shows the same page.
+* **Settings**: sound/music, render scale for the in-game touch UI, gamepad
+  binds, and the interface language (system, English or French; the engine's
+  own locale follows).
+
 | | |
 |---|---|
 | minSdk | 21 (Android 5.0, 2014) |
@@ -85,7 +111,8 @@ cd android
 ./gradlew :app:bundleRelease
 #    → app/build/outputs/bundle/release/app-release.aab
 
-# Unit tests (IPC framing, config serialization, binds format)
+# Unit tests: IPC framing, config serialization, scheme/weapon-set formats,
+# binds, pack index, DLC catalog parsing, end-of-match stats, demo recording
 ./gradlew :app:testDebugUnitTest
 ```
 
@@ -181,8 +208,15 @@ controllers at startup).
   `NetGameConnection` slots in beside `GameConnection`.
 * Data is copied out of the APK on first launch (~2×218 MB on disk). A
   zero-copy `PHYSFS_Io` mount of the APK is the planned optimization.
-* Hand-drawn maps, demo playback/recording UI and the video recorder are not
-  exposed.
+* **Replays are implemented but switched off** (`Features.REPLAYS`). Recording
+  follows the desktop recipe byte for byte (`QTfrontend/game.cpp` +
+  `net/tcpBase.cpp`) and the engine does replay the file, but it reports a
+  state-checksum mismatch at every replayed turn (`uCommandHandlers.pas`
+  `chNextTurn`, "Desync detected") and a long match drifts from the one that
+  was recorded. Root cause not found yet; the next step is to compare a
+  recording made here with one made by the Qt frontend from the same sources.
+  Worth settling before online play, which relays the very same frames.
+* Hand-drawn maps and the video recorder are not exposed.
 * GLES 1.1 renderer (as on iOS); fine everywhere, but Vulkan-only future
   devices would need the engine's GL2 path ported to GLES2.
 
