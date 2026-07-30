@@ -7,10 +7,13 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.WindowManager
 import org.hedgewars.android.config.ConfigSerializer
+import org.hedgewars.android.config.FortPicker
 import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.MissionConfig
+import org.hedgewars.android.config.TeamSlot
 import org.hedgewars.android.data.BindsWriter
 import org.hedgewars.android.data.GamePaths
+import org.hedgewars.android.data.MissionsRepository
 import org.hedgewars.android.data.UserPrefs
 import org.hedgewars.android.engine.EngineArgs
 
@@ -28,14 +31,32 @@ class GameLauncher(private val context: Context) {
     private val prefs = UserPrefs(context)
 
     fun launchLocalGame(cfg: GameConfig) {
+        // Remembered BEFORE the forts are resolved, so "play again" re-rolls
+        // them along with the terrain.
         lastLocalConfig = cfg
-        launch(ConfigSerializer.localGame(cfg))
+        launch(ConfigSerializer.localGame(cfg.copy(teams = resolveForts(cfg.teams))))
     }
 
     fun launchMission(cfg: MissionConfig) {
         val scope = cfg.campaign ?: cfg.script.substringAfterLast('/').removeSuffix(".lua")
-        launch(ConfigSerializer.missionGame(cfg), campaignTeam = cfg.team.name, campaignScope = scope)
+        val team = cfg.team.copy(fort = FortPicker.resolve(cfg.team.fort, installedForts()))
+        launch(
+            ConfigSerializer.missionGame(cfg.copy(team = team)),
+            campaignTeam = cfg.team.name,
+            campaignScope = scope,
+        )
     }
+
+    /**
+     * Gives every team that has no fort of its own a real one for this match
+     * (see [FortPicker]). The engine only ever draws the fort of a clan's
+     * first team, and a name with no image is fatal, so this has to happen
+     * before the config is serialized.
+     */
+    private fun resolveForts(teams: List<TeamSlot>): List<TeamSlot> =
+        FortPicker.resolveSlots(teams, installedForts())
+
+    private fun installedForts(): List<String> = MissionsRepository(paths).forts()
 
     /**
      * Plays back a recorded match: the same engine launch, except the demo's

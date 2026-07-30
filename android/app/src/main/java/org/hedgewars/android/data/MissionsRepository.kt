@@ -1,6 +1,7 @@
 package org.hedgewars.android.data
 
 import java.io.File
+import org.hedgewars.android.config.Team
 
 /**
  * Enumerates game content from the installed Data tree, merged with what
@@ -65,6 +66,26 @@ class MissionsRepository(private val dataDir: File, userDataDir: File) {
             ?.map { it.name }
             ?: emptyList()
         return (system + packs.dirsWithFile("Themes/", "theme.cfg")).distinct().sorted()
+    }
+
+    /**
+     * Fort names teams can use: Data/Forts holds one `<name>L.png` per fort
+     * (plus an optional mirrored `R`), and packs can add more — the engine
+     * mounts them at the same virtual path, so a pack fort is a valid choice.
+     */
+    fun forts(): List<String> {
+        val system = File(dataDir, "Forts").listFiles { f -> f.isFile && f.name.endsWith("L.png") }
+            ?.map { it.name.removeSuffix("L.png") }
+            ?: emptyList()
+        // Pack entries are matched case-insensitively, but the engine only ever
+        // opens "<name>L.png" and PhysFS does not fold case: a pack shipping
+        // "…L.PNG" would offer a fort that is fatal to load, so drop those.
+        val fromPacks = packs.fileNames("Forts/", "L.png")
+            .filter { packs.hasFile("Forts/${it}L.png") }
+        return (system + fromPacks)
+            .filter { it.isNotEmpty() && it != Team.FORT_RANDOM }
+            .distinct()
+            .sorted()
     }
 
     /**

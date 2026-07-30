@@ -37,6 +37,7 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.hedgewars.android.Features
 import org.hedgewars.android.R
 import org.hedgewars.android.config.DetailEntry
 import org.hedgewars.android.config.GameConfig
@@ -82,13 +83,15 @@ fun StatsScreen(nav: NavController) {
     // rotation. An unsaved recording is not deleted here: this composition is
     // destroyed by a rotation too, and the next match sweeps it anyway
     // (GameLauncher.launch / GameActivity.onCreate).
-    var canSave by remember { mutableStateOf(!isReplay && temp.length() > 0L) }
+    var canSave by remember {
+        mutableStateOf(Features.REPLAYS && !isReplay && temp.length() > 0L)
+    }
 
     HwScreen(title = stringResource(R.string.stats_title), onBack = { nav.safeBack() }) {
         if (report == null) {
             // Nothing to show (a stale navigation): let the user back out.
             Text(
-                stringResource(R.string.replays_empty),
+                stringResource(R.string.stats_empty),
                 color = HwColors.TextMuted,
                 style = MaterialTheme.typography.bodyMedium,
             )

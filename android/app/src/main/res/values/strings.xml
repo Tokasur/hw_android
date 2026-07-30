@@ -50,6 +50,7 @@
     <!-- Teams -->
     <string name="teams_title">Teams</string>
     <string name="teams_new">New team</string>
+    <string name="team_fort_random">Random</string>
     <string name="teams_edit">Edit team</string>
     <string name="teams_delete">Delete team</string>
     <string name="teams_name">Team name</string>
@@ -332,6 +333,7 @@
 
     <!-- End-of-match statistics -->
     <string name="stats_title">Results</string>
+    <string name="stats_empty">Nothing to show.</string>
     <string name="stats_ranking_header">Ranking</string>
     <string name="stats_details_header">Details</string>
     <string name="stats_graph_header">Health graph</string>

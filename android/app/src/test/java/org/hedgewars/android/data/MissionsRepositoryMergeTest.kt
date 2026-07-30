@@ -61,6 +61,32 @@ class MissionsRepositoryMergeTest {
     }
 
     @Test
+    fun `forts come from the L images of Data and of packs`() {
+        val r = repo()
+        systemFile("Forts/PlaneL.png")
+        systemFile("Forts/EarthL.png")
+        systemFile("Forts/EarthR.png")           // mirrored variant, not a fort
+        systemFile("Forts/Castle-icon.png")      // frontend art, not a fort
+        systemFile("Forts/L.png")                // no name at all
+        writePack(
+            "P.hwp",
+            mapOf(
+                "Forts/RocketfortL.png" to "x",
+                "Forts/PlaneL.png" to "x",
+                // The engine opens "<name>L.png" verbatim and PhysFS does not
+                // fold case, so this one would be fatal to load: don't offer it.
+                "Forts/WindowsfortL.PNG" to "x",
+            ),
+        )
+        assertEquals(listOf("Earth", "Plane", "Rocketfort"), r.forts())
+    }
+
+    @Test
+    fun `no forts installed yields an empty list`() {
+        assertEquals(emptyList<String>(), repo().forts())
+    }
+
+    @Test
     fun `game styles read their cfg recommendations like the desktop`() {
         val r = repo()
         systemFile("Scripts/Multiplayer/Racer.lua", "-- lua")

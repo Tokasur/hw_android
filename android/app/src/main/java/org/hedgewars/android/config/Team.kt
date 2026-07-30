@@ -13,7 +13,13 @@ data class Team(
     val name: String,
     val hogNames: List<String>,
     val grave: String = "Statue",
-    val fort: String = "Plane",
+    /**
+     * Fort used in "Forts" map mode — a name under Data/Forts, or
+     * [FORT_RANDOM] to draw a different one at every match (the default, so
+     * forts vary out of the box like they do on the desktop, where every team
+     * gets a random fort when it is created).
+     */
+    val fort: String = FORT_RANDOM,
     val voicepack: String = "Default",
     val flag: String = "hedgewars",
     val hat: String = "NoHat",
@@ -27,6 +33,20 @@ data class Team(
 
     companion object {
         const val MAX_HOGS = 8
+
+        /**
+         * "Pick a fort at random for this match". Never sent to the engine:
+         * it is resolved at launch (see config/FortPicker) because an unknown
+         * fort name is fatal — the engine loads `<name>L.png` as a critical
+         * asset while generating a forts map (uLand.pas MakeFortsMap).
+         *
+         * A star cannot collide with a real fort name (they come from file
+         * names under Data/Forts and from content packs).
+         */
+        const val FORT_RANDOM = "*"
+
+        /** Last-resort fort, for the impossible case of an empty Data/Forts. */
+        const val FORT_FALLBACK = "Plane"
 
         /** Official team color palette (QTfrontend/hwconsts.h HW_TEAMCOLOR_ARRAY). */
         val COLORS = intArrayOf(

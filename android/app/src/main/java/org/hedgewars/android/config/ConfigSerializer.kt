@@ -98,7 +98,7 @@ object ConfigSerializer {
         val cmds = mutableListOf<String>()
         cmds += "eaddteam ${md5Hex(PLAYER_NAME)} $color ${t.name}"
         cmds += "egrave ${t.grave}"
-        cmds += "efort ${t.fort}"
+        cmds += "efort ${engineFort(t.fort)}"
         cmds += "evoicepack ${t.voicepack}"
         cmds += "eflag ${t.flag}"
         for (i in 0 until slot.hogCount) {
@@ -113,7 +113,7 @@ object ConfigSerializer {
         val cmds = mutableListOf<String>()
         cmds += "esetmissteam ${md5Hex(PLAYER_NAME)} $color ${t.name}"
         cmds += "egrave ${t.grave}"
-        cmds += "efort ${t.fort}"
+        cmds += "efort ${engineFort(t.fort)}"
         cmds += "evoicepack ${t.voicepack}"
         cmds += "eflag ${t.flag}"
         for (i in 0 until Team.MAX_HOGS) {
@@ -122,6 +122,15 @@ object ConfigSerializer {
         }
         return cmds
     }
+
+    /**
+     * Safety net: the "random fort" marker is resolved before launch
+     * ([FortPicker], called from GameLauncher). Should one ever reach here,
+     * send a real fort — the engine treats a missing fort image as a fatal
+     * error while generating a forts map.
+     */
+    private fun engineFort(fort: String): String =
+        if (fort == Team.FORT_RANDOM) Team.FORT_FALLBACK else fort
 
     fun md5Hex(s: String): String =
         MessageDigest.getInstance("MD5").digest(s.toByteArray(Charsets.UTF_8))

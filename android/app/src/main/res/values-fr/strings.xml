@@ -48,6 +48,7 @@
     <!-- Équipes -->
     <string name="teams_title">Équipes</string>
     <string name="teams_new">Nouvelle équipe</string>
+    <string name="team_fort_random">Aléatoire</string>
     <string name="teams_edit">Modifier l\'équipe</string>
     <string name="teams_delete">Supprimer l\'équipe</string>
     <string name="teams_name">Nom de l\'équipe</string>
@@ -328,6 +329,7 @@
 
     <!-- Statistiques de fin de partie -->
     <string name="stats_title">Résultats</string>
+    <string name="stats_empty">Rien à afficher.</string>
     <string name="stats_ranking_header">Classement</string>
     <string name="stats_details_header">Détails</string>
     <string name="stats_graph_header">Courbes de santé</string>

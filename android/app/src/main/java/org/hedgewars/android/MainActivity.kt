@@ -170,7 +170,16 @@ private fun AppNavigation() {
             composable("weaponSetEdit") { WeaponSetEditScreen(nav, null) }
             composable("dlc") { DlcScreen(nav) }
             composable("stats") { StatsScreen(nav) }
-            composable("replays") { ReplaysScreen(nav) }
+            // Registered even while replays are hidden ([Features.REPLAYS]) —
+            // navigation-compose turns every route into an implicit deep link,
+            // so send an outside caller home instead of showing the screen.
+            composable("replays") {
+                if (Features.REPLAYS) {
+                    ReplaysScreen(nav)
+                } else {
+                    LaunchedEffect(Unit) { nav.popBackStack("home", inclusive = false) }
+                }
+            }
             composable("settings") { SettingsScreen(nav) }
             composable("about") { AboutScreen(nav) }
             composable("controls") { ControlsScreen(nav) }

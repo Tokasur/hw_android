@@ -12,6 +12,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.WindowManager
+import org.hedgewars.android.Features
 import org.hedgewars.android.R
 import org.hedgewars.android.config.StatsParser
 import org.hedgewars.android.data.CampaignStore
@@ -349,7 +350,7 @@ class GameActivity : SDLActivity() {
         // a mission's Lua script answers 'v?' queries that no replay can
         // reproduce, and its stats belong to the mission, not to a scoreboard.
         localMatch = campaignTeam == null
-        val recorder = if (localMatch && !replay) DemoRecorder() else null
+        val recorder = if (Features.REPLAYS && localMatch && !replay) DemoRecorder() else null
         demoRecorder = recorder
 
         EngineOutcome.markRunning(this)
