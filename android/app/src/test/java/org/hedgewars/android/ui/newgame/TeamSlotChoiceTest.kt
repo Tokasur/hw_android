@@ -24,34 +24,46 @@ class TeamSlotChoiceTest {
     }
 
     @Test
-    fun `a slot may keep its team or take a free one`() {
+    fun `taking a free team just replaces the one on that line`() {
+        val after = pickTeamInto(slots("Alpha", "Beta"), slotIndex = 0, picked = saved[2])
+        assertEquals(listOf("Gamma", "Beta"), after.map { it.team.name })
+    }
+
+    @Test
+    fun `taking a team that already plays trades the two lines`() {
+        // The case that matters with only two teams saved: swapping who is who.
+        val after = pickTeamInto(slots("Alpha", "Beta"), slotIndex = 0, picked = saved[1])
+        assertEquals(listOf("Beta", "Alpha"), after.map { it.team.name })
+    }
+
+    @Test
+    fun `trading teams leaves each line with its own human or CPU setting`() {
+        val inPlay = listOf(
+            TeamSlot(saved[0].copy(difficulty = 0), colorIndex = 0),   // human seat
+            TeamSlot(saved[1].copy(difficulty = 4), colorIndex = 1),   // CPU seat
+        )
+        val after = pickTeamInto(inPlay, slotIndex = 0, picked = saved[1])
+        assertEquals(listOf("Beta", "Alpha"), after.map { it.team.name })
+        assertEquals(listOf(0, 4), after.map { it.team.difficulty })
+        // Colours belong to the seat too.
+        assertEquals(listOf(0, 1), after.map { it.colorIndex })
+    }
+
+    @Test
+    fun `picking the team already on the line changes nothing`() {
         val inPlay = slots("Alpha", "Beta")
-        assertEquals(
-            listOf("Alpha", "Gamma"),
-            teamChoices(saved, inPlay, slotIndex = 0).map { it.name },
-        )
-        assertEquals(
-            listOf("Beta", "Gamma"),
-            teamChoices(saved, inPlay, slotIndex = 1).map { it.name },
-        )
+        assertEquals(inPlay, pickTeamInto(inPlay, slotIndex = 1, picked = saved[1]))
     }
 
     @Test
-    fun `a team already playing elsewhere is not offered twice`() {
-        val choices = teamChoices(saved, slots("Alpha", "Beta", "Gamma"), slotIndex = 2)
-        assertEquals(listOf("Gamma"), choices.map { it.name })
-    }
-
-    @Test
-    fun `an anonymous slot may take any team that is free`() {
+    fun `an anonymous line can take a saved team without disturbing the rest`() {
         val inPlay = listOf(
             TeamSlot(saved[0], colorIndex = 0),
             TeamSlot(Team.default("Team 2", "Hog", difficulty = 3), colorIndex = 1),
         )
-        assertEquals(
-            listOf("Beta", "Gamma"),
-            teamChoices(saved, inPlay, slotIndex = 1).map { it.name },
-        )
+        val after = pickTeamInto(inPlay, slotIndex = 1, picked = saved[2])
+        assertEquals(listOf("Alpha", "Gamma"), after.map { it.team.name })
+        assertEquals(3, after[1].team.difficulty)
     }
 
     @Test

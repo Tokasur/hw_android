@@ -115,8 +115,14 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     }
     var hogCount by remember { mutableStateOf(4f) }
 
-    // Quick game: single AI difficulty. Multiplayer: a live list of slots.
+    // Quick game: the player's team, its opponent, and one AI level.
     var aiDifficulty by remember { mutableStateOf(3) }
+    var playerTeam by remember {
+        mutableStateOf(allTeams.firstOrNull { !it.isCpu } ?: allTeams.firstOrNull())
+    }
+    var cpuTeam by remember {
+        mutableStateOf(allTeams.firstOrNull { it.name != playerTeam?.name })
+    }
     val slots = remember {
         mutableStateListOf<TeamSlot>().apply {
             if (mode == NewGameMode.MULTI) {
@@ -146,6 +152,12 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
             val fresh = allTeams.firstOrNull { it.name == slot.team.name } ?: return@forEachIndexed
             slots[i] = slot.copy(team = fresh.copy(difficulty = slot.team.difficulty))
         }
+        // Same for the quick game's two teams, and fall back to something that
+        // still exists if the chosen one was deleted meanwhile.
+        playerTeam = allTeams.firstOrNull { it.name == playerTeam?.name }
+            ?: allTeams.firstOrNull { !it.isCpu } ?: allTeams.firstOrNull()
+        cpuTeam = allTeams.firstOrNull { it.name == cpuTeam?.name }
+            ?: allTeams.firstOrNull { it.name != playerTeam?.name }
         onPauseOrDispose { }
     }
 
@@ -160,7 +172,19 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
             HwPanel(Modifier.fillMaxWidth()) {
                 if (mode == NewGameMode.QUICK) {
                     QuickTeams(
-                        playerName = allTeams.firstOrNull { !it.isCpu }?.name ?: "Player",
+                        playerName = playerTeam?.name ?: "Player",
+                        cpuName = cpuTeam?.name ?: "Robots",
+                        allTeams = allTeams,
+                        // Picking the other side's team simply trades the two,
+                        // as in local multiplayer.
+                        onPlayerTeam = { picked ->
+                            if (picked.name == cpuTeam?.name) cpuTeam = playerTeam
+                            playerTeam = picked
+                        },
+                        onCpuTeam = { picked ->
+                            if (picked.name == playerTeam?.name) playerTeam = cpuTeam
+                            cpuTeam = picked
+                        },
                         aiDifficulty = aiDifficulty,
                         onDifficulty = { aiDifficulty = it },
                     )
@@ -239,13 +263,12 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 }
                 val teams: List<TeamSlot> = when (mode) {
                     NewGameMode.QUICK -> {
-                        val player = allTeams.firstOrNull { !it.isCpu } ?: allTeams.firstOrNull()
+                        val player = playerTeam
                         if (player == null) {
                             Toast.makeText(context, R.string.local_game_need_one_team, Toast.LENGTH_LONG).show()
                             return@HwButton
                         }
-                        val cpu = allTeams.firstOrNull { it.name != player.name }
-                            ?: Team.default("Robots", "Unit")
+                        val cpu = cpuTeam ?: Team.default("Robots", "Unit")
                         listOf(
                             TeamSlot(player.copy(difficulty = 0), colorIndex = 0, hogCount = hogCount.toInt()),
                             TeamSlot(cpu.copy(difficulty = aiDifficulty), colorIndex = 1, hogCount = hogCount.toInt()),
@@ -276,17 +299,31 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
 }
 
 @Composable
-private fun QuickTeams(playerName: String, aiDifficulty: Int, onDifficulty: (Int) -> Unit) {
+private fun QuickTeams(
+    playerName: String,
+    cpuName: String,
+    allTeams: List<Team>,
+    onPlayerTeam: (Team) -> Unit,
+    onCpuTeam: (Team) -> Unit,
+    aiDifficulty: Int,
+    onDifficulty: (Int) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             ColorDot(0)
-            Text("  $playerName", color = HwColors.TextLight, style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.weight(1f))
+            TeamSlotPicker(playerName, allTeams, onPlayerTeam, Modifier.weight(1f))
             DifficultyBadge(0)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             ColorDot(1)
-            Text("  Robots (CPU)", color = HwColors.TextLight, style = MaterialTheme.typography.titleMedium)
+            TeamSlotPicker(cpuName, allTeams, onCpuTeam, Modifier.weight(1f))
+            DifficultyBadge(aiDifficulty)
         }
         Text(
             stringResource(R.string.quick_game_difficulty),
@@ -302,13 +339,26 @@ private fun QuickTeams(playerName: String, aiDifficulty: Int, onDifficulty: (Int
 }
 
 /**
- * Teams a slot may switch to: the ones no other slot is using, plus the one it
- * already holds. A team plays at most once in a match, exactly like the
- * desktop's playing/not-playing team lists.
+ * Puts [picked] on the given line.
+ *
+ * A team plays at most once in a match (the desktop keeps two lists, playing
+ * and not playing), so picking a team that is already on another line makes the
+ * two lines **trade** teams instead of refusing — with only two teams saved,
+ * trading is the whole point, and hiding them would leave nothing to pick.
+ * Each line keeps its own human/CPU setting: the role belongs to the seat, not
+ * to the team.
  */
-internal fun teamChoices(all: List<Team>, slots: List<TeamSlot>, slotIndex: Int): List<Team> {
-    val takenElsewhere = slots.filterIndexed { i, _ -> i != slotIndex }.map { it.team.name }.toSet()
-    return all.filterNot { it.name in takenElsewhere }
+internal fun pickTeamInto(slots: List<TeamSlot>, slotIndex: Int, picked: Team): List<TeamSlot> {
+    val here = slots[slotIndex]
+    if (picked.name == here.team.name) return slots
+    val there = slots.indexOfFirst { it.team.name == picked.name }
+    return slots.mapIndexed { i, slot ->
+        when (i) {
+            slotIndex -> slot.copy(team = picked.copy(difficulty = slot.team.difficulty))
+            there -> slot.copy(team = here.team.copy(difficulty = slot.team.difficulty))
+            else -> slot
+        }
+    }
 }
 
 /**
@@ -339,12 +389,11 @@ private fun MultiTeams(
                 }) { ColorDot(slot.colorIndex) }
                 TeamSlotPicker(
                     name = slot.team.name,
-                    choices = teamChoices(allTeams, slots, index),
+                    choices = allTeams,
                     modifier = Modifier.weight(1f),
-                    // Which team fills the slot is the player's call; the slot
-                    // keeps its human/CPU setting.
                     onPick = { picked ->
-                        slots[index] = slot.copy(team = picked.copy(difficulty = slot.team.difficulty))
+                        val updated = pickTeamInto(slots, index, picked)
+                        updated.forEachIndexed { i, s -> if (s != slots[i]) slots[i] = s }
                     },
                 )
                 HwChip(
