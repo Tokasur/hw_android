@@ -32,7 +32,24 @@ class DemosRepository(private val dir: File) {
             ?.map { Demo(it) }
             ?: emptyList()
 
-    fun delete(demo: Demo): Boolean = demo.file.delete()
+    fun delete(demo: Demo): Boolean {
+        localeFile(demo.file).delete()
+        return demo.file.delete()
+    }
+
+    /**
+     * The engine locale a demo was recorded with, or null when we don't know
+     * (a demo from before 0.3.0, or one copied in from the desktop).
+     *
+     * It has to be replayed with that same locale: loading a Lua script folds
+     * the localization file into the state checksum (uScript.pas
+     * ScriptLocaleReader), so a match recorded in French and replayed in
+     * English desynchronizes as soon as a game style is involved.
+     */
+    fun recordedLocale(demo: Demo): String? =
+        runCatching { localeFile(demo.file).readText().trim() }.getOrNull()?.takeIf { it.isNotEmpty() }
+
+    private fun localeFile(demo: File) = File(demo.parentFile, "${demo.name}.$LOCALE_EXTENSION")
 
     /**
      * Promotes the recording the game process left behind into a real replay:
@@ -41,12 +58,15 @@ class DemosRepository(private val dir: File) {
      *
      * Returns null when there is nothing to save.
      */
-    fun saveLastDemo(temp: File, at: Date = Date()): File? {
+    fun saveLastDemo(temp: File, at: Date = Date(), locale: String? = null): File? {
         val raw = runCatching { temp.readBytes() }.getOrNull()?.takeIf { it.isNotEmpty() } ?: return null
         dir.mkdirs()
         val out = uniqueFile(stamp(at))
         return runCatching {
             out.writeBytes(tlToTd(raw))
+            // Remembered beside the demo rather than inside it: the stream is
+            // the desktop's byte for byte, and must stay playable there.
+            if (locale != null) runCatching { localeFile(out).writeText(locale) }
             temp.delete()
             out
         }.getOrNull()
@@ -72,6 +92,9 @@ class DemosRepository(private val dir: File) {
 
     companion object {
         const val EXTENSION = "hwd"
+
+        /** Sidecar holding the engine locale a demo was recorded with. */
+        const val LOCALE_EXTENSION = "locale"
 
         /** Engine/frontend protocol version (CMakeLists HEDGEWARS_PROTO_VER). */
         const val PROTO = 60

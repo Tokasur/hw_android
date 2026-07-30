@@ -100,6 +100,32 @@ class DemosRepositoryTest {
     }
 
     @Test
+    fun `the recording locale is remembered and read back`() {
+        val repo = repo()
+        repo.saveLastDemo(tempWith(stream("TL")), date("2026-07-30_14-05"), locale = "fr.txt")
+        assertEquals("fr.txt", repo.recordedLocale(repo.list().single()))
+    }
+
+    @Test
+    fun `a demo saved without a locale reports none`() {
+        // Recordings from before 0.3.0, and demos copied in from the desktop.
+        val repo = repo()
+        repo.saveLastDemo(tempWith(stream("TL")), date("2026-07-30_14-05"))
+        assertNull(repo.recordedLocale(repo.list().single()))
+    }
+
+    @Test
+    fun `deleting takes the locale sidecar with it`() {
+        val repo = repo()
+        val saved = repo.saveLastDemo(tempWith(stream("TL")), date("2026-07-30_14-05"), locale = "fr.txt")!!
+        val sidecar = File(saved.parentFile, "${saved.name}.locale")
+        assertTrue(sidecar.exists())
+        assertTrue(repo.delete(repo.list().single()))
+        assertFalse(sidecar.exists())
+        assertTrue(repo.list().isEmpty())
+    }
+
+    @Test
     fun `sweeping drops an unsaved recording`() {
         val repo = repo()
         val temp = tempWith(stream("TL"))

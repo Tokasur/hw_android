@@ -44,6 +44,7 @@ import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.RankEntry
 import org.hedgewars.android.config.StatsReport
 import org.hedgewars.android.data.DemosRepository
+import org.hedgewars.android.engine.EngineArgs
 import org.hedgewars.android.engine.MatchRecords
 import org.hedgewars.android.game.GameLauncher
 import org.hedgewars.android.ui.common.HwButton
@@ -154,7 +155,8 @@ fun StatsScreen(nav: NavController) {
                 HwButton(stringResource(R.string.stats_save_replay), primary = false, onClick = {
                     canSave = false
                     scope.launch {
-                        val saved = withContext(Dispatchers.IO) { demos.saveLastDemo(temp) }
+                        val locale = EngineArgs.localeFileFor(context)
+                        val saved = withContext(Dispatchers.IO) { demos.saveLastDemo(temp, locale = locale) }
                         if (saved != null) {
                             Toast.makeText(
                                 context,

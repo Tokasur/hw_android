@@ -6,16 +6,10 @@ object Features {
     /**
      * Replay recording and playback (engine demos, *.hwd).
      *
-     * Off for now: a recorded match plays back faithfully at first, but the
-     * engine reports a state-checksum mismatch at every replayed turn
-     * ("Desync detected", uCommandHandlers.pas chNextTurn) and the match
-     * slowly drifts, so a replay can end differently from the match it came
-     * from. Until that is understood, the whole feature stays out of sight.
-     *
-     * Setting this to true is all it takes to bring it back: the recorder in
-     * GameActivity, the "save replay" button on the results screen and the
-     * Replays entry in the main menu all key off this flag, and the "replays"
-     * route is registered either way.
+     * On since 0.3.0. It used to desynchronize at every replayed turn, which
+     * turned out not to be a replay problem at all: the engine lost the sign
+     * of its fixed-point numbers whenever Pascal called into Rust, so no two
+     * runs of the same input agreed (see android/docs/online-readiness.md).
      */
-    const val REPLAYS = false
+    const val REPLAYS = true
 }

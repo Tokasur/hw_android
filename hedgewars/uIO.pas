@@ -470,12 +470,14 @@ while (headcmd <> nil)
     RemoveCmd
     end;
 
-if (headcmd <> nil) and tmpflag and (not CurrentTeam^.hasGone) and (GameTicks < LongWord(hiTicks shl 16) + headcmd^.loTime) then
-    checkFails(true,
-            'oops, queue error. in buffer: ' + headcmd^.cmd +
+// A command whose tick has already gone by can never be dequeued again (the
+// loop above matches on equality), so the queue is stuck from here on. Say so
+// loudly instead of drifting in silence — but do not make it fatal: losing the
+// rest of a replay beats killing the process.
+if (headcmd <> nil) and tmpflag and (not CurrentTeam^.hasGone) and (GameTicks > LongWord(hiTicks shl 16) + headcmd^.loTime) then
+    AddFileLog('oops, queue error. in buffer: ' + headcmd^.cmd +
             ' (' + IntToStr(GameTicks) + ' > ' +
-            IntToStr(hiTicks shl 16 + headcmd^.loTime) + ')',
-            true);
+            IntToStr(hiTicks shl 16 + headcmd^.loTime) + ')');
 
 isInLag:= (headcmd = nil) and tmpflag and (not CurrentTeam^.hasGone);
 

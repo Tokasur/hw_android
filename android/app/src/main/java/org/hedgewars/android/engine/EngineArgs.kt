@@ -50,4 +50,20 @@ data class EngineArgs(
 
     private fun b64(s: String): String =
         Base64.encodeToString(s.toByteArray(Charsets.UTF_8), Base64.NO_WRAP)
+
+    companion object {
+        /**
+         * Engine locale file matching the app language, falling back to
+         * English when we ship no translation for it.
+         *
+         * Shared with the replay code on purpose: a demo records the locale it
+         * ran with, and must be replayed with exactly the same one.
+         */
+        fun localeFileFor(context: android.content.Context): String {
+            val paths = org.hedgewars.android.data.GamePaths(context)
+            val lang = org.hedgewars.android.data.AppLocale.effectiveLanguage(context)
+            val file = "$lang.txt"
+            return if (java.io.File(paths.dataDir, "Locale/$file").exists()) file else "en.txt"
+        }
+    }
 }
