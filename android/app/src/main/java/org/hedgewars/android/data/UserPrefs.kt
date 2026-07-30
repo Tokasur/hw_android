@@ -42,4 +42,12 @@ class UserPrefs(context: Context) {
     var uiScale: String
         get() = prefs.getString("uiScale", "auto") ?: "auto"
         set(v) = prefs.edit { putString("uiScale", v) }
+
+    /**
+     * UI language as a tag ("en", "fr"); empty means follow the system.
+     * Applied through [AppLocale] — the engine's own locale follows it too.
+     */
+    var language: String
+        get() = prefs.getString("language", "") ?: ""
+        set(v) = prefs.edit { putString("language", v) }
 }

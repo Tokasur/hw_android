@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import org.hedgewars.android.data.PackContentIndex
 
 /**
  * Small decoded-thumbnail cache. Map previews (256x128) and theme icons are
@@ -55,3 +56,40 @@ fun DiskImage(
         Box(modifier.fillMaxSize()) { placeholder() }
     }
 }
+
+/**
+ * Like [DiskImage] for content that may come from a downloaded pack: tries
+ * the system Data tree first, then the user content (loose file or zip entry
+ * inside an installed .hwp, via [PackContentIndex]). Same cache, same
+ * placeholder contract.
+ */
+@Composable
+fun PackImage(
+    rel: String,
+    dataDir: File,
+    index: PackContentIndex,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Fit,
+    placeholder: @Composable () -> Unit = {},
+) {
+    val image by produceState<ImageBitmap?>(initialValue = null, rel) {
+        value = decode(File(dataDir, rel)) ?: decodePackEntry(index, rel)
+    }
+    val img = image
+    if (img != null) {
+        Image(bitmap = img, contentDescription = null, modifier = modifier, contentScale = contentScale)
+    } else {
+        Box(modifier.fillMaxSize()) { placeholder() }
+    }
+}
+
+private suspend fun decodePackEntry(index: PackContentIndex, rel: String): ImageBitmap? =
+    withContext(Dispatchers.IO) {
+        val key = "pack:$rel"
+        thumbCache.get(key)?.let { return@withContext it }
+        val bytes = index.readEntry(rel) ?: return@withContext null
+        runCatching {
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                ?.also { thumbCache.put(key, it) }
+        }.getOrNull()
+    }

@@ -14,6 +14,7 @@ import org.hedgewars.android.R
 import org.hedgewars.android.config.WeaponSet
 import org.hedgewars.android.data.WeaponSetsRepository
 import org.hedgewars.android.ui.common.PresetManagerScreen
+import org.hedgewars.android.ui.common.safeBack
 
 @Composable
 fun WeaponSetsScreen(nav: NavController) {
@@ -33,7 +34,7 @@ fun WeaponSetsScreen(nav: NavController) {
         customsHeader = stringResource(R.string.weapon_sets_custom),
         presetNames = WeaponSet.PRESETS.map { it.name },
         customNames = customs.map { it.name },
-        onBack = { nav.popBackStack() },
+        onBack = { nav.safeBack() },
         onNew = { nav.navigate("weaponSetEdit") },
         onOpen = { nav.navigate("weaponSetEdit/${Uri.encode(it)}") },
         onDuplicate = { name ->

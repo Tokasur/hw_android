@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import org.hedgewars.android.Features
 import org.hedgewars.android.R
 import org.hedgewars.android.ui.common.HwButton
 
@@ -54,7 +55,11 @@ fun HomeScreen(nav: NavController) {
         HwButton(stringResource(R.string.menu_local_game), { nav.navigate("local") }, col)
         HwButton(stringResource(R.string.menu_missions), { nav.navigate("missions") }, col)
         HwButton(stringResource(R.string.menu_teams), { nav.navigate("teams") }, col)
+        HwButton(stringResource(R.string.menu_dlc), { nav.navigate("dlc") }, col)
 
+        if (Features.REPLAYS) {
+            HwButton(stringResource(R.string.menu_replays), { nav.navigate("replays") }, col, primary = false)
+        }
         HwButton(stringResource(R.string.menu_settings), { nav.navigate("settings") }, col, primary = false)
         HwButton(stringResource(R.string.settings_controls_help), { nav.navigate("controls") }, col, primary = false)
         HwButton(stringResource(R.string.menu_about), { nav.navigate("about") }, col, primary = false)

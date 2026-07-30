@@ -31,6 +31,7 @@
     <string name="local_game_add_team">Add team</string>
     <string name="local_game_start">Start game</string>
     <string name="local_game_need_teams">Add at least two teams with different colors</string>
+    <string name="local_game_need_one_team">Create a team first</string>
     <string name="local_game_hogs_per_team">Hedgehogs per team</string>
     <string name="local_game_map">Map</string>
     <string name="local_game_map_random">Random map</string>
@@ -49,6 +50,7 @@
     <!-- Teams -->
     <string name="teams_title">Teams</string>
     <string name="teams_new">New team</string>
+    <string name="team_fort_random">Random</string>
     <string name="teams_edit">Edit team</string>
     <string name="teams_delete">Delete team</string>
     <string name="teams_name">Team name</string>
@@ -73,7 +75,7 @@
     <string name="settings_ui_scale_250">250% (huge)</string>
     <string name="settings_gamepad">Gamepad</string>
     <string name="settings_gamepad_enabled">Enable default gamepad mapping</string>
-    <string name="settings_controls_help">Touch controls help</string>
+    <string name="settings_controls_help">Controls (touch &amp; gamepad)</string>
 
     <!-- About -->
     <string name="about_title">About</string>
@@ -82,11 +84,10 @@
 
     <!-- Game -->
     <string name="game_error_title">Engine error</string>
+    <string name="game_quit_title">Quit the match?</string>
+    <string name="game_quit_yes">Yes (A)</string>
+    <string name="game_quit_no">No (B)</string>
 
-    <!-- Controls help -->
-    <string name="controls_title">Controls</string>
-    <string name="controls_touch">Touch: drag to scroll, pinch to zoom. Use the on-screen arrows to walk, the aim widget to aim, the fire button to shoot (hold for more power). Tap your hedgehog or the corner button to open the weapon menu. Tap a target for air strikes.</string>
-    <string name="controls_gamepad">Gamepad: D-pad/left stick to walk and aim, right stick moves the camera, A jump, B backflip, X fire, Y weapon menu, Start pause. In the weapon menu, the D-pad browses, A or X picks, B or Y closes. R1/R2 cycle the grenade fuse (1-5 s), L1 cycles bounciness. Hold L2 to aim precisely.</string>
     <!-- Engine crash handling -->
     <string name="engine_crash_retry">The game crashed at start — retrying…</string>
 
@@ -235,4 +236,158 @@
         <item>Minigun</item>
         <item>Sentry Bot</item>
     </string-array>
+
+    <!-- Downloadable content -->
+    <string name="menu_dlc">Downloadable content</string>
+    <string name="dlc_title">Downloadable content</string>
+    <string name="dlc_installed_header">Installed packs</string>
+    <string name="dlc_installed_empty">No packs installed yet.</string>
+    <string name="dlc_catalog_header">Community catalog</string>
+    <string name="dlc_loading">Loading catalog…</string>
+    <string name="dlc_error_offline">Couldn\'t load the catalog. Check your Internet connection.</string>
+    <string name="dlc_install">Install</string>
+    <string name="dlc_installed_chip">Installed ✓</string>
+    <string name="dlc_all_downloads">All downloads</string>
+    <string name="dlc_download_failed">Download failed: %1$s</string>
+    <string name="dlc_delete_confirm_title">Delete this pack?</string>
+    <string name="dlc_delete_confirm_text">%1$s will be removed from the game.</string>
+    <string name="dlc_next_match_note">Installed content is active from the next match.</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="local_game_style">Game style</string>
+    <string name="local_game_style_none">None</string>
+
+    <!-- Map picker -->
+    <string name="map_kind_random">Random</string>
+    <string name="map_kind_maze">Maze</string>
+    <string name="map_kind_perlin">Perlin</string>
+    <string name="map_kind_forts">Forts</string>
+    <string name="map_kind_named">Map</string>
+    <string name="map_named_empty">No named maps installed</string>
+    <string name="map_new_seed">New seed</string>
+    <string name="map_terrain_size">Terrain size</string>
+    <string name="map_fort_distance">Distance between forts: %1$d</string>
+
+    <!-- Controls reference -->
+    <string name="controls_title">Controls</string>
+    <string name="controls_touch_title">Touch</string>
+    <string name="controls_touch_move_in">Arrows</string>
+    <string name="controls_touch_move_out">Walk left or right. Hold to keep walking.</string>
+    <string name="controls_touch_aim_in">Aim widget</string>
+    <string name="controls_touch_aim_out">Drag up or down to change the angle.</string>
+    <string name="controls_touch_fire_in">Fire button</string>
+    <string name="controls_touch_fire_out">Tap to shoot. Hold and release for more power.</string>
+    <string name="controls_touch_ammo_in">Your hedgehog, or the briefcase</string>
+    <string name="controls_touch_ammo_out">Opens the weapon menu.</string>
+    <string name="controls_touch_target_in">Tap the ground</string>
+    <string name="controls_touch_target_out">Picks the target of weapons that need one (air strikes, teleport…).</string>
+    <string name="controls_touch_camera_in">Drag / pinch</string>
+    <string name="controls_touch_camera_out">Move the camera and zoom in or out.</string>
+    <string name="controls_touch_pause_in">Pause button (top right)</string>
+    <string name="controls_touch_pause_out">Pauses and resumes the match.</string>
+
+    <string name="controls_jump_title">Jumping</string>
+    <string name="controls_jump_intro">Three moves share one button — on touch the jump button, on a gamepad A and B.</string>
+    <string name="controls_jump_short_in">Short tap / A</string>
+    <string name="controls_jump_short_out">Jump: hops up and slightly forward, over small gaps.</string>
+    <string name="controls_jump_double_in">Tap again in mid-air</string>
+    <string name="controls_jump_double_out">Backflip: jumps higher and backwards. Use it to escape or get on a ledge behind you.</string>
+    <string name="controls_jump_long_in">Long press / B</string>
+    <string name="controls_jump_long_out">Long jump: a flatter, longer leap forward.</string>
+
+    <string name="controls_gamepad_title">Gamepad</string>
+    <string name="controls_pad_move_in">D-pad / left stick</string>
+    <string name="controls_pad_move_out">Walk, and aim up or down.</string>
+    <string name="controls_pad_precise_in">L2 held</string>
+    <string name="controls_pad_precise_out">Aim precisely (slow motion of the crosshair).</string>
+    <string name="controls_pad_camera_in">Right stick</string>
+    <string name="controls_pad_camera_out">Move the camera.</string>
+    <string name="controls_pad_fire_in">X</string>
+    <string name="controls_pad_fire_out">Fire. Hold for more power.</string>
+    <string name="controls_pad_jump_in">A</string>
+    <string name="controls_pad_jump_out">Jump (press again in mid-air for a backflip).</string>
+    <string name="controls_pad_ljump_in">B</string>
+    <string name="controls_pad_ljump_out">Long jump.</string>
+    <string name="controls_pad_ammo_in">Y</string>
+    <string name="controls_pad_ammo_out">Opens the weapon menu.</string>
+    <string name="controls_pad_pause_in">Start</string>
+    <string name="controls_pad_pause_out">Pause and resume.</string>
+    <string name="controls_pad_quit_in">Select, or the back button</string>
+    <string name="controls_pad_quit_out">Asks whether to quit the match (A yes, B no).</string>
+
+    <string name="controls_ammo_menu_title">In the weapon menu</string>
+    <string name="controls_menu_browse_in">D-pad / tap</string>
+    <string name="controls_menu_browse_out">Browse the weapons.</string>
+    <string name="controls_menu_pick_in">A or X / tap</string>
+    <string name="controls_menu_pick_out">Pick the weapon.</string>
+    <string name="controls_menu_close_in">B or Y / tap outside</string>
+    <string name="controls_menu_close_out">Close the menu.</string>
+
+    <string name="controls_weapon_title">While a weapon is selected</string>
+    <string name="controls_weapon_timer_in">R1 / R2</string>
+    <string name="controls_weapon_timer_out">Set the fuse of grenades and mines (1 to 5 seconds).</string>
+    <string name="controls_weapon_bounce_in">L1</string>
+    <string name="controls_weapon_bounce_out">Set how much the projectile bounces.</string>
+
+    <string name="settings_language">Language</string>
+    <string name="settings_language_system">System language</string>
+
+    <!-- End-of-match statistics -->
+    <string name="stats_title">Results</string>
+    <string name="stats_empty">Nothing to show.</string>
+    <string name="stats_ranking_header">Ranking</string>
+    <string name="stats_details_header">Details</string>
+    <string name="stats_graph_header">Health graph</string>
+    <plurals name="stats_best_shot">
+        <item quantity="one">The best shot award was won by %1$s with %2$d pt.</item>
+        <item quantity="other">The best shot award was won by %1$s with %2$d pts.</item>
+    </plurals>
+    <plurals name="stats_best_killer">
+        <item quantity="one">The best killer is %1$s with %2$d kill in a turn.</item>
+        <item quantity="other">The best killer is %1$s with %2$d kills in a turn.</item>
+    </plurals>
+    <plurals name="stats_hogs_killed">
+        <item quantity="one">A total of %1$d hedgehog was killed during this round.</item>
+        <item quantity="other">A total of %1$d hedgehogs were killed during this round.</item>
+    </plurals>
+    <plurals name="stats_self_damage">
+        <item quantity="one">%1$s thought it\'s good to shoot their own hedgehogs for %2$d pt.</item>
+        <item quantity="other">%1$s thought it\'s good to shoot their own hedgehogs for %2$d pts.</item>
+    </plurals>
+    <plurals name="stats_self_kills">
+        <item quantity="one">%1$s killed %2$d of their own hedgehogs.</item>
+        <item quantity="other">%1$s killed %2$d of their own hedgehogs.</item>
+    </plurals>
+    <plurals name="stats_turn_skips">
+        <item quantity="one">%1$s was scared and skipped turn %2$d time.</item>
+        <item quantity="other">%1$s was scared and skipped turn %2$d times.</item>
+    </plurals>
+    <string name="stats_ever_after">With everyone having the same clan color, there was no reason to fight. And so the hedgehogs happily lived in peace ever after.</string>
+    <plurals name="stats_kills">
+        <item quantity="one">%1$d kill</item>
+        <item quantity="other">%1$d kills</item>
+    </plurals>
+    <plurals name="stats_points">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <plurals name="stats_crates">
+        <item quantity="one">%1$d crate</item>
+        <item quantity="other">%1$d crates</item>
+    </plurals>
+    <plurals name="stats_seconds">
+        <item quantity="one">%1$s second</item>
+        <item quantity="other">%1$s seconds</item>
+    </plurals>
+    <string name="stats_custom_points">%1$d %2$s</string>
+    <string name="stats_play_again">Play again</string>
+    <string name="stats_save_replay">Save replay</string>
+    <string name="stats_replay_saved">Replay saved</string>
+    <string name="stats_continue">Continue</string>
+
+    <!-- Replays -->
+    <string name="menu_replays">Replays</string>
+    <string name="replays_title">Replays</string>
+    <string name="replays_empty">No replays yet. Finish a local match and save it from the results screen.</string>
+    <string name="replays_delete_confirm_title">Delete this replay?</string>
+    <string name="replays_delete_confirm_text">%1$s will be removed.</string>
 </resources>

@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,33 +22,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.hedgewars.android.R
 import org.hedgewars.android.config.MapChoice
 import org.hedgewars.android.config.MapGen
-import org.hedgewars.android.ui.common.DiskImage
+import org.hedgewars.android.data.PackContentIndex
 import org.hedgewars.android.ui.common.HwChip
+import org.hedgewars.android.ui.common.PackImage
 import org.hedgewars.android.ui.common.SelectableTile
 import org.hedgewars.android.ui.theme.HwColors
 import java.io.File
 
-/** One of the four map-selection modes shown as chips. */
-enum class MapKind { RANDOM, MAZE, PERLIN, NAMED }
+/** One of the five map-selection modes shown as chips. */
+enum class MapKind { RANDOM, MAZE, PERLIN, FORTS, NAMED }
 
 fun MapKind.toGen(): MapGen = when (this) {
     MapKind.MAZE -> MapGen.MAZE
     MapKind.PERLIN -> MapGen.PERLIN
-    else -> MapGen.REGULAR
+    MapKind.FORTS -> MapGen.FORTS
+    MapKind.RANDOM, MapKind.NAMED -> MapGen.REGULAR
 }
 
 /**
- * Map picker: a row of kind chips (Random / Maze / Perlin / Map), then either
- * a thumbnail strip of named maps or the generated-terrain controls.
+ * Map picker: a row of kind chips (Random / Maze / Perlin / Forts / Map), then
+ * either a thumbnail strip of named maps or the generated-terrain controls.
  */
 @Composable
 fun MapPicker(
     dataDir: File,
+    packIndex: PackContentIndex,
     kind: MapKind,
     onKind: (MapKind) -> Unit,
     namedMaps: List<String>,
@@ -54,26 +61,35 @@ fun MapPicker(
     onSelectMap: (String) -> Unit,
     featureSize: Float,
     onFeatureSize: (Float) -> Unit,
+    fortDistance: Float,
+    onFortDistance: (Float) -> Unit,
     seed: String,
     onReseed: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            HwChip("Random", kind == MapKind.RANDOM) { onKind(MapKind.RANDOM) }
-            HwChip("Maze", kind == MapKind.MAZE) { onKind(MapKind.MAZE) }
-            HwChip("Perlin", kind == MapKind.PERLIN) { onKind(MapKind.PERLIN) }
-            HwChip("Map", kind == MapKind.NAMED) { onKind(MapKind.NAMED) }
+        // Five chips no longer fit a portrait phone: let the row scroll.
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            HwChip(stringResource(R.string.map_kind_random), kind == MapKind.RANDOM) { onKind(MapKind.RANDOM) }
+            HwChip(stringResource(R.string.map_kind_maze), kind == MapKind.MAZE) { onKind(MapKind.MAZE) }
+            HwChip(stringResource(R.string.map_kind_perlin), kind == MapKind.PERLIN) { onKind(MapKind.PERLIN) }
+            HwChip(stringResource(R.string.map_kind_forts), kind == MapKind.FORTS) { onKind(MapKind.FORTS) }
+            HwChip(stringResource(R.string.map_kind_named), kind == MapKind.NAMED) { onKind(MapKind.NAMED) }
         }
 
         if (kind == MapKind.NAMED) {
             if (namedMaps.isEmpty()) {
-                Text("No named maps installed", color = HwColors.TextMuted,
+                Text(stringResource(R.string.map_named_empty), color = HwColors.TextMuted,
                     style = MaterialTheme.typography.bodySmall)
             } else {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(namedMaps, key = { it }) { name ->
                         MapTile(
-                            preview = File(dataDir, "Maps/$name/preview.png"),
+                            previewRel = "Maps/$name/preview.png",
+                            dataDir = dataDir,
+                            packIndex = packIndex,
                             name = name,
                             selected = name == selectedMap,
                             onClick = { onSelectMap(name) },
@@ -88,32 +104,58 @@ fun MapPicker(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                HwChip("🎲  New seed", selected = false, onClick = onReseed)
+                HwChip("🎲  " + stringResource(R.string.map_new_seed), selected = false, onClick = onReseed)
                 Text(
                     seed.trim('{', '}').take(8),
                     style = MaterialTheme.typography.bodySmall,
                     color = HwColors.TextMuted,
                 )
             }
-            Text("Terrain size", color = HwColors.TextMuted, style = MaterialTheme.typography.bodySmall)
-            androidx.compose.material3.Slider(
-                value = featureSize,
-                onValueChange = onFeatureSize,
-                valueRange = 12f..100f,
-            )
+            if (kind == MapKind.FORTS) {
+                // Forts feed the same e$feature_size, but there it is the gap
+                // between forts — the desktop's own 1..25 slider (default 12).
+                Text(
+                    stringResource(R.string.map_fort_distance, fortDistance.toInt()),
+                    color = HwColors.TextMuted,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                androidx.compose.material3.Slider(
+                    value = fortDistance,
+                    onValueChange = onFortDistance,
+                    valueRange = 1f..25f,
+                    steps = 23,
+                )
+            } else {
+                Text(stringResource(R.string.map_terrain_size), color = HwColors.TextMuted,
+                    style = MaterialTheme.typography.bodySmall)
+                androidx.compose.material3.Slider(
+                    value = featureSize,
+                    onValueChange = onFeatureSize,
+                    valueRange = 12f..100f,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun MapTile(preview: File, name: String, selected: Boolean, onClick: () -> Unit) {
+private fun MapTile(
+    previewRel: String,
+    dataDir: File,
+    packIndex: PackContentIndex,
+    name: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(140.dp),
     ) {
         SelectableTile(selected = selected, onClick = onClick, modifier = Modifier.fillMaxWidth().aspectRatio(2f)) {
-            DiskImage(
-                file = preview,
+            PackImage(
+                rel = previewRel,
+                dataDir = dataDir,
+                index = packIndex,
                 modifier = Modifier.fillMaxWidth().aspectRatio(2f).clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop,
                 placeholder = { Text("…", color = HwColors.TextMuted, modifier = Modifier.padding(8.dp)) },
@@ -135,6 +177,7 @@ private fun MapTile(preview: File, name: String, selected: Boolean, onClick: () 
 @Composable
 fun ThemePicker(
     dataDir: File,
+    packIndex: PackContentIndex,
     themes: List<String>,
     selected: String,
     onSelect: (String) -> Unit,
@@ -150,8 +193,10 @@ fun ThemePicker(
                     onClick = { onSelect(theme) },
                     modifier = Modifier.size(72.dp),
                 ) {
-                    DiskImage(
-                        file = File(dataDir, "Themes/$theme/icon.png"),
+                    PackImage(
+                        rel = "Themes/$theme/icon.png",
+                        dataDir = dataDir,
+                        index = packIndex,
                         modifier = Modifier.size(72.dp).padding(8.dp),
                         contentScale = ContentScale.Fit,
                         placeholder = {

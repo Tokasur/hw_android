@@ -29,6 +29,7 @@
     <string name="local_game_add_team">Ajouter une équipe</string>
     <string name="local_game_start">Lancer la partie</string>
     <string name="local_game_need_teams">Ajoutez au moins deux équipes de couleurs différentes</string>
+    <string name="local_game_need_one_team">Crée d\'abord une équipe</string>
     <string name="local_game_hogs_per_team">Hérissons par équipe</string>
     <string name="local_game_map">Carte</string>
     <string name="local_game_map_random">Carte aléatoire</string>
@@ -47,6 +48,7 @@
     <!-- Équipes -->
     <string name="teams_title">Équipes</string>
     <string name="teams_new">Nouvelle équipe</string>
+    <string name="team_fort_random">Aléatoire</string>
     <string name="teams_edit">Modifier l\'équipe</string>
     <string name="teams_delete">Supprimer l\'équipe</string>
     <string name="teams_name">Nom de l\'équipe</string>
@@ -71,7 +73,7 @@
     <string name="settings_ui_scale_250">250 % (très grande)</string>
     <string name="settings_gamepad">Manette</string>
     <string name="settings_gamepad_enabled">Activer le mappage manette par défaut</string>
-    <string name="settings_controls_help">Aide des contrôles tactiles</string>
+    <string name="settings_controls_help">Contrôles (tactile et manette)</string>
 
     <!-- À propos -->
     <string name="about_title">À propos</string>
@@ -80,11 +82,10 @@
 
     <!-- Jeu -->
     <string name="game_error_title">Erreur du moteur</string>
+    <string name="game_quit_title">Quitter la partie ?</string>
+    <string name="game_quit_yes">Oui (A)</string>
+    <string name="game_quit_no">Non (B)</string>
 
-    <!-- Aide contrôles -->
-    <string name="controls_title">Contrôles</string>
-    <string name="controls_touch">Tactile : faites glisser pour déplacer la caméra, pincez pour zoomer. Utilisez les flèches à l\'écran pour marcher, le viseur pour ajuster l\'angle, le bouton de tir pour tirer (maintenez pour plus de puissance). Touchez votre hérisson ou le bouton dédié pour ouvrir le menu des armes. Touchez une cible pour les frappes aériennes.</string>
-    <string name="controls_gamepad">Manette : croix/stick gauche pour marcher et viser, stick droit pour la caméra, A saut, B salto arrière, X tir, Y menu des armes, Start pause. Dans le menu des armes, la croix parcourt, A ou X valide, B ou Y ferme. R1/R2 font défiler le délai des grenades (1-5 s), L1 le rebond. L2 maintenu = visée précise.</string>
 
     <!-- Éditeurs de schémas et de jeux d'armes -->
     <string name="common_save">Enregistrer</string>
@@ -231,4 +232,158 @@
         <item>Minigun</item>
         <item>Sentry Bot</item>
     </string-array>
+
+    <!-- Contenu téléchargeable -->
+    <string name="menu_dlc">Contenu téléchargeable</string>
+    <string name="dlc_title">Contenu téléchargeable</string>
+    <string name="dlc_installed_header">Paquets installés</string>
+    <string name="dlc_installed_empty">Aucun paquet installé pour le moment.</string>
+    <string name="dlc_catalog_header">Catalogue communautaire</string>
+    <string name="dlc_loading">Chargement du catalogue…</string>
+    <string name="dlc_error_offline">Impossible de charger le catalogue. Vérifiez votre connexion Internet.</string>
+    <string name="dlc_install">Installer</string>
+    <string name="dlc_installed_chip">Installé ✓</string>
+    <string name="dlc_all_downloads">Tous les téléchargements</string>
+    <string name="dlc_download_failed">Échec du téléchargement : %1$s</string>
+    <string name="dlc_delete_confirm_title">Supprimer ce paquet ?</string>
+    <string name="dlc_delete_confirm_text">%1$s sera retiré du jeu.</string>
+    <string name="dlc_next_match_note">Le contenu installé est actif dès la prochaine partie.</string>
+    <string name="common_cancel">Annuler</string>
+    <string name="local_game_style">Style de jeu</string>
+    <string name="local_game_style_none">Aucun</string>
+
+    <!-- Sélecteur de carte -->
+    <string name="map_kind_random">Aléatoire</string>
+    <string name="map_kind_maze">Labyrinthe</string>
+    <string name="map_kind_perlin">Perlin</string>
+    <string name="map_kind_forts">Forts</string>
+    <string name="map_kind_named">Carte</string>
+    <string name="map_named_empty">Aucune carte nommée installée</string>
+    <string name="map_new_seed">Nouveau tirage</string>
+    <string name="map_terrain_size">Taille du terrain</string>
+    <string name="map_fort_distance">Distance entre les forts : %1$d</string>
+
+    <!-- Aide des contrôles -->
+    <string name="controls_title">Contrôles</string>
+    <string name="controls_touch_title">Tactile</string>
+    <string name="controls_touch_move_in">Flèches</string>
+    <string name="controls_touch_move_out">Marcher à gauche ou à droite. Maintenez pour continuer.</string>
+    <string name="controls_touch_aim_in">Viseur</string>
+    <string name="controls_touch_aim_out">Glissez vers le haut ou le bas pour régler l\'angle.</string>
+    <string name="controls_touch_fire_in">Bouton de tir</string>
+    <string name="controls_touch_fire_out">Touchez pour tirer. Maintenez puis relâchez pour plus de puissance.</string>
+    <string name="controls_touch_ammo_in">Votre hérisson, ou la mallette</string>
+    <string name="controls_touch_ammo_out">Ouvre le menu des armes.</string>
+    <string name="controls_touch_target_in">Toucher le terrain</string>
+    <string name="controls_touch_target_out">Choisit la cible des armes qui en demandent une (frappe aérienne, téléportation…).</string>
+    <string name="controls_touch_camera_in">Glisser / pincer</string>
+    <string name="controls_touch_camera_out">Déplace la caméra et zoome.</string>
+    <string name="controls_touch_pause_in">Bouton pause (en haut à droite)</string>
+    <string name="controls_touch_pause_out">Met la partie en pause et la reprend.</string>
+
+    <string name="controls_jump_title">Les sauts</string>
+    <string name="controls_jump_intro">Trois mouvements sur un seul bouton — le bouton de saut au tactile, A et B à la manette.</string>
+    <string name="controls_jump_short_in">Appui court / A</string>
+    <string name="controls_jump_short_out">Saut : bondit vers le haut et un peu vers l\'avant, pour franchir un petit trou.</string>
+    <string name="controls_jump_double_in">Second appui en plein saut</string>
+    <string name="controls_jump_double_out">Salto arrière : saute plus haut et vers l\'arrière. Idéal pour se dégager ou monter sur un rebord derrière soi.</string>
+    <string name="controls_jump_long_in">Appui long / B</string>
+    <string name="controls_jump_long_out">Saut en longueur : un bond plus tendu et plus loin vers l\'avant.</string>
+
+    <string name="controls_gamepad_title">Manette</string>
+    <string name="controls_pad_move_in">Croix / stick gauche</string>
+    <string name="controls_pad_move_out">Marcher, et viser vers le haut ou le bas.</string>
+    <string name="controls_pad_precise_in">L2 maintenu</string>
+    <string name="controls_pad_precise_out">Viser précisément (le viseur bouge au ralenti).</string>
+    <string name="controls_pad_camera_in">Stick droit</string>
+    <string name="controls_pad_camera_out">Déplace la caméra.</string>
+    <string name="controls_pad_fire_in">X</string>
+    <string name="controls_pad_fire_out">Tirer. Maintenez pour plus de puissance.</string>
+    <string name="controls_pad_jump_in">A</string>
+    <string name="controls_pad_jump_out">Saut (rappuyez en plein vol pour un salto arrière).</string>
+    <string name="controls_pad_ljump_in">B</string>
+    <string name="controls_pad_ljump_out">Saut en longueur.</string>
+    <string name="controls_pad_ammo_in">Y</string>
+    <string name="controls_pad_ammo_out">Ouvre le menu des armes.</string>
+    <string name="controls_pad_pause_in">Start</string>
+    <string name="controls_pad_pause_out">Pause et reprise.</string>
+    <string name="controls_pad_quit_in">Select, ou le bouton retour</string>
+    <string name="controls_pad_quit_out">Demande si vous voulez quitter la partie (A oui, B non).</string>
+
+    <string name="controls_ammo_menu_title">Dans le menu des armes</string>
+    <string name="controls_menu_browse_in">Croix / toucher</string>
+    <string name="controls_menu_browse_out">Parcourt les armes.</string>
+    <string name="controls_menu_pick_in">A ou X / toucher</string>
+    <string name="controls_menu_pick_out">Choisit l\'arme.</string>
+    <string name="controls_menu_close_in">B ou Y / toucher à côté</string>
+    <string name="controls_menu_close_out">Ferme le menu.</string>
+
+    <string name="controls_weapon_title">Une arme en main</string>
+    <string name="controls_weapon_timer_in">R1 / R2</string>
+    <string name="controls_weapon_timer_out">Règle le délai des grenades et des mines (1 à 5 secondes).</string>
+    <string name="controls_weapon_bounce_in">L1</string>
+    <string name="controls_weapon_bounce_out">Règle le rebond du projectile.</string>
+
+    <string name="settings_language">Langue</string>
+    <string name="settings_language_system">Langue du système</string>
+
+    <!-- Statistiques de fin de partie -->
+    <string name="stats_title">Résultats</string>
+    <string name="stats_empty">Rien à afficher.</string>
+    <string name="stats_ranking_header">Classement</string>
+    <string name="stats_details_header">Détails</string>
+    <string name="stats_graph_header">Courbes de santé</string>
+    <plurals name="stats_best_shot">
+        <item quantity="one">Le prix du meilleur tir a été décerné à %1$s avec %2$d point.</item>
+        <item quantity="other">Le prix du meilleur tir a été décerné à %1$s avec %2$d points.</item>
+    </plurals>
+    <plurals name="stats_best_killer">
+        <item quantity="one">Le meilleur tueur est %1$s avec %2$d mort dans un tour.</item>
+        <item quantity="other">Le meilleur tueur est %1$s avec %2$d morts dans un tour.</item>
+    </plurals>
+    <plurals name="stats_hogs_killed">
+        <item quantity="one">Un total de %1$d hérisson a été tué durant cette partie.</item>
+        <item quantity="other">Un total de %1$d hérissons ont été tués durant cette partie.</item>
+    </plurals>
+    <plurals name="stats_self_damage">
+        <item quantity="one">%1$s pense que c\'est bien de tirer sur ses propres hérissons pour %2$d point.</item>
+        <item quantity="other">%1$s pense que c\'est bien de tirer sur ses propres hérissons pour %2$d points.</item>
+    </plurals>
+    <plurals name="stats_self_kills">
+        <item quantity="one">%1$s a tué %2$d de ses propres hérissons.</item>
+        <item quantity="other">%1$s a tué %2$d de ses propres hérissons.</item>
+    </plurals>
+    <plurals name="stats_turn_skips">
+        <item quantity="one">%1$s a eu peur et a passé son tour %2$d fois.</item>
+        <item quantity="other">%1$s a eu peur et a passé son tour %2$d fois.</item>
+    </plurals>
+    <string name="stats_ever_after">Tout le monde avait la même couleur de clan : il n\'y avait aucune raison de se battre. Et les hérissons vécurent heureux et en paix pour toujours.</string>
+    <plurals name="stats_kills">
+        <item quantity="one">%1$d tué</item>
+        <item quantity="other">%1$d tués</item>
+    </plurals>
+    <plurals name="stats_points">
+        <item quantity="one">%1$d point</item>
+        <item quantity="other">%1$d points</item>
+    </plurals>
+    <plurals name="stats_crates">
+        <item quantity="one">%1$d caisse</item>
+        <item quantity="other">%1$d caisses</item>
+    </plurals>
+    <plurals name="stats_seconds">
+        <item quantity="one">%1$s seconde</item>
+        <item quantity="other">%1$s secondes</item>
+    </plurals>
+    <string name="stats_custom_points">%1$d %2$s</string>
+    <string name="stats_play_again">Rejouer</string>
+    <string name="stats_save_replay">Enregistrer le replay</string>
+    <string name="stats_replay_saved">Replay enregistré</string>
+    <string name="stats_continue">Continuer</string>
+
+    <!-- Replays -->
+    <string name="menu_replays">Replays</string>
+    <string name="replays_title">Replays</string>
+    <string name="replays_empty">Aucun replay pour l\'instant. Termine une partie locale et enregistre-la depuis l\'écran de résultats.</string>
+    <string name="replays_delete_confirm_title">Supprimer ce replay ?</string>
+    <string name="replays_delete_confirm_text">%1$s sera supprimé.</string>
 </resources>

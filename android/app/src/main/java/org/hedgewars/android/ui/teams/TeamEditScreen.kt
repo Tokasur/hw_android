@@ -28,14 +28,18 @@ import java.io.File
 import org.hedgewars.android.R
 import org.hedgewars.android.config.Team
 import org.hedgewars.android.data.GamePaths
+import org.hedgewars.android.data.MissionsRepository
+import org.hedgewars.android.data.PackContentIndex
 import org.hedgewars.android.data.TeamsRepository
 import org.hedgewars.android.ui.common.DropdownPicker
+import org.hedgewars.android.ui.common.safeBack
 
 @Composable
 fun TeamEditScreen(nav: NavController, teamName: String?) {
     val context = LocalContext.current
     val repo = remember { TeamsRepository(context) }
     val paths = remember { GamePaths(context) }
+    val packs = remember { PackContentIndex(paths.userDataDir) }
     val original = remember { teamName?.let { repo.get(it) } }
 
     var name by remember { mutableStateOf(original?.name ?: "") }
@@ -43,22 +47,23 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
         (original?.hogNames ?: (1..Team.MAX_HOGS).map { "Hog $it" }).toMutableStateList()
     }
     var grave by remember { mutableStateOf(original?.grave ?: "Statue") }
-    var fort by remember { mutableStateOf(original?.fort ?: "Plane") }
+    var fort by remember { mutableStateOf(original?.fort ?: Team.FORT_RANDOM) }
     var voicepack by remember { mutableStateOf(original?.voicepack ?: "Default") }
     var flag by remember { mutableStateOf(original?.flag ?: "hedgewars") }
     var hat by remember { mutableStateOf(original?.hat ?: "NoHat") }
 
-    val graves = remember { dataNames(paths, "Graphics/Graves", ".png") }
+    val graves = remember { dataNames(paths, packs, "Graphics/Graves", ".png") }
     val forts = remember {
-        File(paths.dataDir, "Forts").listFiles { f -> f.name.endsWith("L.png") }
-            ?.map { it.name.removeSuffix("L.png") }?.distinct()?.sorted() ?: listOf("Plane")
+        MissionsRepository(paths).forts().ifEmpty { listOf(Team.FORT_FALLBACK) }
     }
     val voices = remember {
-        File(paths.dataDir, "Sounds/voices").listFiles { f -> f.isDirectory }
-            ?.map { it.name }?.sorted() ?: listOf("Default")
+        val system = File(paths.dataDir, "Sounds/voices").listFiles { f -> f.isDirectory }
+            ?.map { it.name } ?: emptyList()
+        (system + packs.subdirs("Sounds/voices/")).distinct().sorted()
+            .ifEmpty { listOf("Default") }
     }
-    val flags = remember { dataNames(paths, "Graphics/Flags", ".png") }
-    val hats = remember { dataNames(paths, "Graphics/Hats", ".png") }
+    val flags = remember { dataNames(paths, packs, "Graphics/Flags", ".png") }
+    val hats = remember { dataNames(paths, packs, "Graphics/Hats", ".png") }
 
     Column(
         modifier = Modifier
@@ -99,7 +104,16 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
 
         DropdownPicker("Hat", hats, hat) { hat = it }
         DropdownPicker("Grave", graves, grave) { grave = it }
-        DropdownPicker("Fort", forts, fort) { fort = it }
+        // "Random" is a marker, not a fort: it is resolved at every launch, so
+        // a team that keeps it shows a different fort in each forts match.
+        val randomFort = stringResource(R.string.team_fort_random)
+        DropdownPicker(
+            "Fort",
+            // The label owns its slot in the list: a pack fort that happened to
+            // carry the same name would otherwise be indistinguishable from it.
+            listOf(randomFort) + forts.filterNot { it == randomFort },
+            if (fort == Team.FORT_RANDOM) randomFort else fort,
+        ) { picked -> fort = if (picked == randomFort) Team.FORT_RANDOM else picked }
         DropdownPicker("Voice", voices, voicepack) { voicepack = it }
         DropdownPicker("Flag", flags, flag) { flag = it }
 
@@ -113,9 +127,13 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
                         hogNames = hogs.map { it.ifBlank { "Hog" } },
                         grave = grave, fort = fort, voicepack = voicepack,
                         flag = flag, hat = hat,
+                        // Not editable here (difficulty is picked per slot in
+                        // game setup) — but it must survive an edit, or saving
+                        // the CPU team would quietly turn it into a human one.
+                        difficulty = original?.difficulty ?: 0,
                     )
                 )
-                nav.popBackStack()
+                nav.safeBack()
             },
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.teams_save)) }
@@ -124,7 +142,7 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
             OutlinedButton(
                 onClick = {
                     repo.delete(original.name)
-                    nav.popBackStack()
+                    nav.safeBack()
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.teams_delete)) }
@@ -132,7 +150,13 @@ fun TeamEditScreen(nav: NavController, teamName: String?) {
     }
 }
 
-private fun dataNames(paths: GamePaths, rel: String, suffix: String): List<String> =
-    File(paths.dataDir, rel).listFiles { f -> f.name.endsWith(suffix) }
-        ?.map { it.name.removeSuffix(suffix) }?.sorted()
-        ?: emptyList()
+private fun dataNames(
+    paths: GamePaths,
+    packs: PackContentIndex,
+    rel: String,
+    suffix: String,
+): List<String> {
+    val system = File(paths.dataDir, rel).listFiles { f -> f.name.endsWith(suffix) }
+        ?.map { it.name.removeSuffix(suffix) } ?: emptyList()
+    return (system + packs.fileNames("$rel/", suffix)).distinct().sorted()
+}

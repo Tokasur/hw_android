@@ -14,6 +14,9 @@ class ConfigSerializerTest {
     private fun team(name: String, difficulty: Int = 0) = Team(
         name = name,
         hogNames = (1..8).map { "$name$it" },
+        // A team as the launcher hands it over: its fort is already resolved
+        // (the "random" marker is replaced before serialization).
+        fort = "Plane",
         difficulty = difficulty,
     )
 
@@ -52,6 +55,63 @@ class ConfigSerializerTest {
     fun `random map sends no emap`() {
         val cmds = ConfigSerializer.localGame(defaultConfig())
         assertFalse(cmds.any { it.startsWith("emap") })
+    }
+
+    @Test
+    fun `the random fort marker never reaches the engine`() {
+        // An unknown fort name is fatal on a forts map (the engine loads
+        // <name>L.png as a critical asset), so the marker must never be sent
+        // even if a launch path forgot to resolve it.
+        val random = team("Alpha").copy(fort = Team.FORT_RANDOM)
+        val local = ConfigSerializer.localGame(
+            defaultConfig().copy(teams = listOf(TeamSlot(random, colorIndex = 0, hogCount = 1)))
+        )
+        assertTrue(local.contains("efort ${Team.FORT_FALLBACK}"))
+        assertFalse(local.any { it.contains(Team.FORT_RANDOM) })
+
+        val mission = ConfigSerializer.missionGame(
+            MissionConfig(team = random, script = "Missions/Training/Basic_Training_-_Bazooka.lua")
+        )
+        assertTrue(mission.contains("efort ${Team.FORT_FALLBACK}"))
+        assertFalse(mission.any { it.contains(Team.FORT_RANDOM) })
+    }
+
+    @Test
+    fun `an explicit fort is sent as is`() {
+        val cmds = ConfigSerializer.localGame(
+            defaultConfig().copy(
+                teams = listOf(
+                    TeamSlot(team("Alpha").copy(fort = "Lonely_Island"), colorIndex = 0, hogCount = 1)
+                )
+            )
+        )
+        assertTrue(cmds.contains("efort Lonely_Island"))
+
+        // Same for a mission team — its fort must reach the engine too.
+        val mission = ConfigSerializer.missionGame(
+            MissionConfig(
+                team = team("Solo").copy(fort = "Lonely_Island"),
+                script = "Missions/Training/Basic_Training_-_Bazooka.lua",
+            )
+        )
+        assertTrue(mission.contains("efort Lonely_Island"))
+    }
+
+    @Test
+    fun `forts map sends mapgen 4 with the fort distance and no maze size`() {
+        val cmds = ConfigSerializer.localGame(
+            defaultConfig().copy(map = MapChoice.Generated(mapGen = MapGen.FORTS, featureSize = 12))
+        )
+        assertTrue(cmds.contains("e\$mapgen 4"))
+        // Forts reuse feature_size as the gap between forts.
+        assertTrue(cmds.contains("e\$feature_size 12"))
+        assertFalse(cmds.any { it.startsWith("emap") })
+        assertFalse(cmds.any { it.startsWith("e\$maze_size") })
+        // The engine ORs gfDivideTeams (0x10) in itself for mgForts
+        // (uLand.pas MakeFortsMap): sending it would double up on the desktop's
+        // own behaviour, which never sets it either.
+        val flags = cmds.first { it.startsWith("e\$gmflags ") }.removePrefix("e\$gmflags ").toInt()
+        assertEquals(0, flags and 0x10)
     }
 
     @Test
