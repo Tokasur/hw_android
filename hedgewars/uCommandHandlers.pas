@@ -445,7 +445,7 @@ var t: LongWord;
     tb: Byte;
 begin
 s:= s; // avoid compiler hint
-if CheckNoTeamOrHH then
+if CheckNoTeamOrHH or CurrentTeam^.ExtDriven then
     exit;
 // We grab the current timer first so we can increment it
 if (CurrentHedgehog^.Gear^.Message and gmPrecise) = 0 then
@@ -477,7 +477,11 @@ procedure chBounce_p(var s: shortstring);
 var t: LongWord;
 begin
 s:= s; // avoid compiler hint
-if CheckNoTeamOrHH then
+// '+bounce' is registered trusted, so t^.Trusted would let it through even
+// while a demo is driving the team — and the '+precise'/'timer' it raises
+// below are checksummed commands. Refuse it outright when we are not the
+// ones playing: a stray button press must not touch a replay or a net game.
+if CheckNoTeamOrHH or CurrentTeam^.ExtDriven then
     exit;
 t:= HHGetBouncinessMsg(CurrentHedgehog^.Gear);
 if t = MSGPARAM_INVALID then // current weapon has no bounciness: no-op
@@ -500,6 +504,8 @@ end;
 procedure chBounce_m(var s: shortstring);
 begin
 s:= s; // avoid compiler hint
+if CheckNoTeamOrHH or CurrentTeam^.ExtDriven then
+    exit;
 if bounceHolds > 0 then
     begin
     Dec(bounceHolds);

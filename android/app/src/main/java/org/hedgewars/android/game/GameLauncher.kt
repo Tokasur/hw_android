@@ -12,6 +12,7 @@ import org.hedgewars.android.config.GameConfig
 import org.hedgewars.android.config.MissionConfig
 import org.hedgewars.android.config.TeamSlot
 import org.hedgewars.android.data.BindsWriter
+import org.hedgewars.android.data.DemosRepository
 import org.hedgewars.android.data.GamePaths
 import org.hedgewars.android.data.MissionsRepository
 import org.hedgewars.android.data.UserPrefs
@@ -64,7 +65,14 @@ class GameLauncher(private val context: Context) {
      * already starts with the config it was made with).
      */
     fun launchReplay(demo: java.io.File) {
-        launch(emptyList(), replayPath = demo.absolutePath)
+        launch(
+            emptyList(),
+            replayPath = demo.absolutePath,
+            // Replay it in the language it was recorded in, whatever the app is
+            // set to now: a Lua script folds its localization file into the
+            // state checksum, so the wrong locale desynchronizes the replay.
+            forcedLocale = DemosRepository(context).recordedLocale(DemosRepository.Demo(demo)),
+        )
     }
 
     private fun launch(
@@ -72,6 +80,7 @@ class GameLauncher(private val context: Context) {
         campaignTeam: String? = null,
         campaignScope: String? = null,
         replayPath: String? = null,
+        forcedLocale: String? = null,
     ) {
         ensureFreshGameProcess(context)
         // Whatever the previous match left behind is stale from here on: the
@@ -115,7 +124,7 @@ class GameLauncher(private val context: Context) {
             userPrefix = paths.userDir.absolutePath,
             width = width,
             height = height,
-            localeFile = engineLocaleFile(),
+            localeFile = forcedLocale ?: EngineArgs.localeFileFor(context),
             sound = prefs.sound,
             music = prefs.music,
             showFps = prefs.showFps,
@@ -135,13 +144,6 @@ class GameLauncher(private val context: Context) {
         // Remembered so a crash-at-start can be relaunched automatically.
         LastLaunch.record(intent)
         context.startActivity(intent)
-    }
-
-    /** Engine locale file matching the app language, if shipped. */
-    private fun engineLocaleFile(): String {
-        val lang = org.hedgewars.android.data.AppLocale.effectiveLanguage(context)
-        val file = "$lang.txt"
-        return if (java.io.File(paths.dataDir, "Locale/$file").exists()) file else "en.txt"
     }
 
     companion object {

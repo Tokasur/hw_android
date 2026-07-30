@@ -72,7 +72,6 @@ var
     pointerCount : Longword;
     fingers: array of TTouch_Data;
     moveCursor : boolean;
-    invertCursor : boolean;
 
     //Pinch to zoom
     pinchSize : LongInt;
@@ -213,7 +212,12 @@ if buttonsDown = 0 then
     moveCursor:= true;
     case pointerCount of
         1:
-            targetting:= not(targetted) and (CurrentHedgehog <> nil) and (Ammoz[CurrentHedgehog^.CurAmmoType].Ammo.Propz and ammoprop_NeedTarget <> 0);
+            // Not while a demo or the network drives the team: the target we
+            // would place is refused anyway, and arming the crosshair only
+            // flips the drag gesture and shows a caption that lies.
+            targetting:= not(targetted) and (CurrentHedgehog <> nil)
+                         and (CurrentTeam <> nil) and (not CurrentTeam^.ExtDriven)
+                         and (Ammoz[CurrentHedgehog^.CurAmmoType].Ammo.Propz and ammoprop_NeedTarget <> 0);
         2:
             begin
             moveCursor:= false;
@@ -241,7 +245,12 @@ if finger = nil then
 
 if moveCursor then
     begin
-        if invertCursor then
+        // Decided here rather than cached, because the only place that used to
+        // set it (ProcessTouch) does not run while the game is externally
+        // driven or paused: dragging then panned the camera the wrong way in
+        // replays. Panning the world means the world follows the finger; aiming
+        // and the ammo menu want the cursor to follow it instead.
+        if not(bShowAmmoMenu or targetting) then
         begin
             CursorPoint.X := CursorPoint.X - finger^.dx;
             CursorPoint.Y := CursorPoint.Y + finger^.dy;
@@ -479,9 +488,8 @@ procedure ProcessTouch;
 var
     deltaAngle: LongInt;
 begin
-invertCursor := not(bShowAmmoMenu or targetting);
 if aimingCrosshair then
-    if CurrentHedgehog^.Gear <> nil then
+    if (CurrentHedgehog <> nil) and (CurrentHedgehog^.Gear <> nil) then
         begin
         deltaAngle:= CurrentHedgehog^.Gear^.Angle - targetAngle;
         if (deltaAngle > -5) and (deltaAngle < 5) then
@@ -608,6 +616,10 @@ function isOnCurrentHog(finger: TTouch_Data): boolean;
 var
     x, y: LongInt;
 begin
+    // Reachable between two turns, and throughout a replay, with no hedgehog
+    // of our own to tap on.
+    if (CurrentHedgehog = nil) or (CurrentHedgehog^.Gear = nil) then
+        exit(false);
     x:= 0;
     y:= 0;
     convertToFingerCoord(x, y, hwRound(CurrentHedgehog^.Gear^.X), hwRound(CurrentHedgehog^.Gear^.Y));

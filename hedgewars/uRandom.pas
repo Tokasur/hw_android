@@ -33,24 +33,51 @@ uses uFloat;
 procedure SetRandomSeed(Seed: shortstring; dropAdditionalPart: boolean); // Sets the seed that should be used for generating pseudo-random values.
 function  GetRandomf: hwFloat; // Returns a pseudo-random hwFloat.
 function  GetRandom(m: LongWord): LongWord;  // Returns a positive pseudo-random integer smaller than m.
-procedure AddRandomness(r: LongWord); 
+procedure AddRandomness(r: LongWord);
 function  rndSign(num: hwFloat): hwFloat; // Returns num with a random chance of having a inverted sign.
+{$IFDEF SYNCDEBUG}
+function  GetRandomDump: LongWord; // Digest of the generator state, for sync diffing only.
+function  GetRandomCalls: shortstring; // "addRandomness/getNext" call counts.
+{$ENDIF}
 
 
 implementation
-uses uRust;
+uses uRust{$IFDEF SYNCDEBUG}, uUtils{$ENDIF};
 
 var cirbuf: array[0..63] of Longword;
     n: byte;
+{$IFDEF SYNCDEBUG}
+var addCalls, nextCalls: LongWord;
+{$ENDIF}
 
-procedure AddRandomness(r: LongWord); 
+procedure AddRandomness(r: LongWord);
 begin
+{$IFDEF SYNCDEBUG}inc(addCalls);{$ENDIF}
 n:= (n + 1) and $3F;
    cirbuf[n]:= cirbuf[n] xor r;
 end;
 
-function GetNext: Longword; 
+{$IFDEF SYNCDEBUG}
+function GetRandomDump: LongWord;
+var i: LongInt;
 begin
+    GetRandomDump:= n;
+    for i:= 0 to 63 do
+        GetRandomDump:= (GetRandomDump * 33) xor cirbuf[i]
+end;
+
+function GetRandomCalls: shortstring;
+var a, b: shortstring;
+begin
+    str(addCalls, a);
+    str(nextCalls, b);
+    GetRandomCalls:= a + '/' + b
+end;
+{$ENDIF}
+
+function GetNext: Longword;
+begin
+{$IFDEF SYNCDEBUG}inc(nextCalls);{$ENDIF}
     n:= (n + 1) and $3F;
     cirbuf[n]:=
            (cirbuf[(n + 40) and $3F] +           {n - 24 mod 64}
@@ -90,7 +117,7 @@ GetNext;
 GetRandomf:= hwf_raw(false, GetNext);
 end;
 
-function GetRandom(m: LongWord): LongWord; 
+function GetRandom(m: LongWord): LongWord;
 begin
 GetNext;
 GetRandom:= GetNext mod m

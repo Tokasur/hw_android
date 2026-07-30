@@ -44,6 +44,9 @@ class GameActivity : SDLActivity() {
 
     /** Collects the engine's end-of-match stat frames for the menu process. */
     private val statsParser = StatsParser()
+
+    /** Set once the end-of-match stats have been written to disk. */
+    private var statsBanked = false
     private var demoRecorder: DemoRecorder? = null
     private var replay = false
     private var localMatch = false
@@ -284,6 +287,12 @@ class GameActivity : SDLActivity() {
         if (report != null && (!replay || report.rankings.isNotEmpty())) {
             MatchRecords.writeStats(this, report)
         }
+        // Mark the outcome before spending time on the demo: the engine halts
+        // this whole process on its own schedule shortly after 'q', and an
+        // outcome still "running" at that moment makes the menu report a
+        // crash and sweep the stats written just above. The demo is the one
+        // artifact worth risking to the race.
+        EngineOutcome.markFinished(this)
         demoRecorder?.snapshot()?.let { MatchRecords.writeDemo(this, it) }
     }
 
@@ -370,16 +379,31 @@ class GameActivity : SDLActivity() {
                 }
                 override fun onStats(kind: Char, text: String) {
                     statsParser.feed(kind, text)
+                    // The final rankings arrive ~3 s before the engine's 'q' —
+                    // and the engine never waits for us: it halts itself right
+                    // after 'q', taking the whole process down (the well-known
+                    // native crash on exit). Bank the outcome and the stats
+                    // the moment the match is provably over, so that losing
+                    // the post-'q' race only ever costs the demo file.
+                    if (!statsBanked && statsParser.hasFinalRankings) {
+                        statsBanked = true
+                        statsParser.build(fromReplay = replay)?.let {
+                            MatchRecords.writeStats(this@GameActivity, it)
+                        }
+                        EngineOutcome.markFinished(this@GameActivity)
+                    }
                 }
                 /**
-                 * A replay ends by running out of recorded input: the engine
-                 * logs "End of input, halting now" and exits without the 'q'
-                 * a played match sends (uGame.pas DoGameTick). That is a clean
-                 * end here — publish the stats it did send and leave, or the
-                 * menu would read the silent exit as an engine crash.
+                 * The engine closed the IPC without a 'q'. Two legitimate ways
+                 * here besides a crash: a replay running out of recorded input
+                 * ("End of input, halting now"), and a played match whose
+                 * process died in the end-of-match race before 'q' was read —
+                 * in both cases the final rankings already arrived, seconds
+                 * earlier. Treat those as the clean end they are; only an EOF
+                 * with no end-of-match stats is a real crash.
                  */
                 override fun onEngineGone() {
-                    if (!replay) return
+                    if (!replay && !statsParser.hasFinalRankings) return
                     publishRecords()
                     EngineOutcome.markFinished(this@GameActivity)
                     runOnUiThread { if (!isFinishing) finishAndRemoveTask() }

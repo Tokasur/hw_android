@@ -24,10 +24,15 @@ pub extern "C" fn hwf_new(numerator: i32, denominator: u32) -> HWFloat {
     FPNum::new(numerator, denominator).into()
 }
 
+/// Booleans crossing this boundary are 32-bit, never `bool`: Rust marks a
+/// `bool` parameter `zeroext` and reads the whole register, while Free Pascal
+/// writes only the low byte of its one-byte `boolean` and leaves the rest of
+/// the register dirty. The sign that leaked out of that gap was random, which
+/// desynchronized every replay.
 #[no_mangle]
-pub extern "C" fn hwf_raw(is_negative: bool, value: u64) -> HWFloat {
+pub extern "C" fn hwf_raw(is_negative: u32, value: u64) -> HWFloat {
     FPNum::from_raw(value >> (32 - FPNum::FRAC_BITS))
-        .with_sign(is_negative)
+        .with_sign(is_negative != 0)
         .into()
 }
 
@@ -137,8 +142,8 @@ pub extern "C" fn hwf_sign_as(num: HWFloat, signum: HWFloat) -> HWFloat {
 }
 
 #[no_mangle]
-pub extern "C" fn hwf_with_sign(num: HWFloat, is_negative: bool) -> HWFloat {
-    FPNum::from(num).with_sign(is_negative).into()
+pub extern "C" fn hwf_with_sign(num: HWFloat, is_negative: u32) -> HWFloat {
+    FPNum::from(num).with_sign(is_negative != 0).into()
 }
 
 #[no_mangle]

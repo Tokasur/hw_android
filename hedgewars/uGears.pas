@@ -635,6 +635,10 @@ if ((GameTicks and $FFFF) = $FFFF) then
         end
     end;
 AddRandomness(CheckSum);
+{$IFDEF SYNCDEBUG}
+AddFileLog('SYNC tick cs=' + IntToStr(CheckSum) + ' rnd=' + IntToStr(GetRandomDump)
+           + ' calls=' + GetRandomCalls);
+{$ENDIF}
 TurnClockActive:= prevtime <> TurnTimeLeft;
 inc(GameTicks);
 if (OuchTauntTimer > 0) then

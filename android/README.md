@@ -208,14 +208,21 @@ controllers at startup).
   `NetGameConnection` slots in beside `GameConnection`.
 * Data is copied out of the APK on first launch (~2×218 MB on disk). A
   zero-copy `PHYSFS_Io` mount of the APK is the planned optimization.
-* **Replays are implemented but switched off** (`Features.REPLAYS`). Recording
-  follows the desktop recipe byte for byte (`QTfrontend/game.cpp` +
-  `net/tcpBase.cpp`) and the engine does replay the file, but it reports a
-  state-checksum mismatch at every replayed turn (`uCommandHandlers.pas`
-  `chNextTurn`, "Desync detected") and a long match drifts from the one that
-  was recorded. Root cause not found yet; the next step is to compare a
-  recording made here with one made by the Qt frontend from the same sources.
-  Worth settling before online play, which relays the very same frames.
+* The end-of-match results screen used to go missing now and then, in any
+  language, since 0.2.9. The engine never waits for the frontend — it sends
+  `q`, tears itself down and calls `halt()` — so whether the results survived
+  was a race against the process dying. Since 0.3.0 (and 0.2.10 for the older
+  line) the stats and the outcome are written as soon as the engine sends its
+  final ranking, about three seconds earlier.
+* Replays record and play back faithfully since 0.3.0. They were off in 0.2.9
+  because every replayed turn reported "Desync detected": the cause was not the
+  recording but the engine itself, which lost the sign of its fixed-point
+  numbers on every Pascal-to-Rust call (`hwf_raw`/`hwf_with_sign` took a Rust
+  `bool`, which is read as a full register, while Free Pascal only wrote its
+  one-byte `boolean`). Flags crossing that boundary are 32-bit now. See
+  [docs/online-readiness.md](docs/online-readiness.md) — the same determinism
+  is what online play will rely on. Demos recorded by an older build do not
+  replay, and 0.3.0 engines cannot play across the network with older ones.
 * Hand-drawn maps and the video recorder are not exposed.
 * GLES 1.1 renderer (as on iOS); fine everywhere, but Vulkan-only future
   devices would need the engine's GL2 path ported to GLES2.

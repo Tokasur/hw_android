@@ -86,6 +86,14 @@ class StatsParser {
         return text.substring(0, i) to text.substring(i + 1)
     }
 
+    /**
+     * True once the end-of-match ranking has arrived ('R'+'P' frames, sent by
+     * uStats.pas SendStats). The engine only ever emits those when the match
+     * has actually concluded — and it does so ~3 seconds BEFORE the final 'q',
+     * which makes this the earliest reliable "the match is over" signal.
+     */
+    val hasFinalRankings: Boolean get() = rankings.isNotEmpty()
+
     /** The collected report, or null when the engine sent nothing usable. */
     fun build(fromReplay: Boolean = false): StatsReport? {
         val report = StatsReport(
