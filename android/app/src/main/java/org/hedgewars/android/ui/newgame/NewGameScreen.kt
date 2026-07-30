@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
@@ -78,7 +81,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     val packIndex = remember { PackContentIndex(paths.userDataDir) }
     val launcher = remember { GameLauncher(context) }
 
-    val allTeams = remember { teamsRepo.list() }
+    var allTeams by remember { mutableStateOf(teamsRepo.list()) }
     val themes = remember { missions.themes().ifEmpty { listOf("Nature") } }
     val namedMaps = remember { missions.multiplayerMaps() }
 
@@ -112,18 +115,6 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
     }
     var hogCount by remember { mutableStateOf(4f) }
 
-    // Custom schemes/weapon sets can appear or vanish while we're away in
-    // their editors; reload on every resume and snap dead selections back.
-    var schemeNames by remember { mutableStateOf(Scheme.PRESETS.map { it.name }) }
-    var weaponNames by remember { mutableStateOf(WeaponSet.PRESETS.map { it.name }) }
-    LifecycleResumeEffect(Unit) {
-        schemeNames = schemesRepo.all().map { it.name }
-        weaponNames = weaponsRepo.all().map { it.name }
-        if (schemeName !in schemeNames) schemeName = Scheme.DEFAULT.name
-        if (weaponsName !in weaponNames) weaponsName = WeaponSet.DEFAULT.name
-        onPauseOrDispose { }
-    }
-
     // Quick game: single AI difficulty. Multiplayer: a live list of slots.
     var aiDifficulty by remember { mutableStateOf(3) }
     val slots = remember {
@@ -136,6 +127,26 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                 }
             }
         }
+    }
+
+    // Teams, schemes and weapon sets can be created, edited or deleted while
+    // we're away in their editors; reload on every resume and snap dead
+    // selections back.
+    var schemeNames by remember { mutableStateOf(Scheme.PRESETS.map { it.name }) }
+    var weaponNames by remember { mutableStateOf(WeaponSet.PRESETS.map { it.name }) }
+    LifecycleResumeEffect(Unit) {
+        schemeNames = schemesRepo.all().map { it.name }
+        weaponNames = weaponsRepo.all().map { it.name }
+        if (schemeName !in schemeNames) schemeName = Scheme.DEFAULT.name
+        if (weaponsName !in weaponNames) weaponsName = WeaponSet.DEFAULT.name
+        allTeams = teamsRepo.list()
+        // Pick up edits to a team already in play (hats, hogs, fort…) without
+        // losing the human/CPU choice made for its slot here.
+        slots.forEachIndexed { i, slot ->
+            val fresh = allTeams.firstOrNull { it.name == slot.team.name } ?: return@forEachIndexed
+            slots[i] = slot.copy(team = fresh.copy(difficulty = slot.team.difficulty))
+        }
+        onPauseOrDispose { }
     }
 
     val title = stringResource(
@@ -154,7 +165,7 @@ fun NewGameScreen(nav: NavController, mode: NewGameMode) {
                         onDifficulty = { aiDifficulty = it },
                     )
                 } else {
-                    MultiTeams(slots)
+                    MultiTeams(slots, allTeams)
                 }
             }
 
@@ -290,8 +301,32 @@ private fun QuickTeams(playerName: String, aiDifficulty: Int, onDifficulty: (Int
     }
 }
 
+/**
+ * Teams a slot may switch to: the ones no other slot is using, plus the one it
+ * already holds. A team plays at most once in a match, exactly like the
+ * desktop's playing/not-playing team lists.
+ */
+internal fun teamChoices(all: List<Team>, slots: List<TeamSlot>, slotIndex: Int): List<Team> {
+    val takenElsewhere = slots.filterIndexed { i, _ -> i != slotIndex }.map { it.team.name }.toSet()
+    return all.filterNot { it.name in takenElsewhere }
+}
+
+/**
+ * The team a new participant starts on: the first one not already playing —
+ * with its own human/CPU level, as the desktop keeps it. Falls back to an
+ * anonymous extra opponent once every saved team is in the match.
+ */
+internal fun nextFreeTeam(all: List<Team>, slots: List<TeamSlot>): Team {
+    val playing = slots.map { it.team.name }.toSet()
+    return all.firstOrNull { it.name !in playing }
+        ?: Team.default("Team ${slots.size + 1}", "Hog", difficulty = 3)
+}
+
 @Composable
-private fun MultiTeams(slots: androidx.compose.runtime.snapshots.SnapshotStateList<TeamSlot>) {
+private fun MultiTeams(
+    slots: androidx.compose.runtime.snapshots.SnapshotStateList<TeamSlot>,
+    allTeams: List<Team>,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         slots.forEachIndexed { index, slot ->
             Row(
@@ -302,8 +337,16 @@ private fun MultiTeams(slots: androidx.compose.runtime.snapshots.SnapshotStateLi
                 Box(Modifier.clip(CircleShape).clickable {
                     slots[index] = slot.copy(colorIndex = (slot.colorIndex + 1) % Team.COLORS.size)
                 }) { ColorDot(slot.colorIndex) }
-                Text(slot.team.name, color = HwColors.TextLight,
-                    style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                TeamSlotPicker(
+                    name = slot.team.name,
+                    choices = teamChoices(allTeams, slots, index),
+                    modifier = Modifier.weight(1f),
+                    // Which team fills the slot is the player's call; the slot
+                    // keeps its human/CPU setting.
+                    onPick = { picked ->
+                        slots[index] = slot.copy(team = picked.copy(difficulty = slot.team.difficulty))
+                    },
+                )
                 HwChip(
                     if (slot.team.difficulty == 0) "👤" else "★".repeat(slot.team.difficulty),
                     selected = false,
@@ -321,8 +364,55 @@ private fun MultiTeams(slots: androidx.compose.runtime.snapshots.SnapshotStateLi
             HwChip("+ " + stringResource(R.string.local_game_add_team), selected = false, onClick = {
                 val usedColors = slots.map { it.colorIndex }.toSet()
                 val color = (0 until Team.COLORS.size).firstOrNull { it !in usedColors } ?: 0
-                slots.add(TeamSlot(Team.default("Team ${slots.size + 1}", "Hog", difficulty = 3), colorIndex = color))
+                slots.add(TeamSlot(nextFreeTeam(allTeams, slots), colorIndex = color))
             })
+        }
+    }
+}
+
+/** The slot's team name, tappable to swap in another of the player's teams. */
+@Composable
+private fun TeamSlotPicker(
+    name: String,
+    choices: List<Team>,
+    onPick: (Team) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    // Nothing to choose from when the player has a single team: no affordance.
+    val pickable = choices.any { it.name != name }
+    Box(modifier) {
+        Row(
+            Modifier.clickable(enabled = pickable) { expanded = true },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                name,
+                color = HwColors.TextLight,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (pickable) {
+                Text(" ▾", color = HwColors.Gold, style = MaterialTheme.typography.titleMedium)
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            choices.forEach { team ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            team.name,
+                            color = if (team.name == name) HwColors.Gold else HwColors.TextLight,
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onPick(team)
+                    },
+                )
+            }
         }
     }
 }
