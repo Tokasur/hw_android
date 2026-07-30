@@ -161,11 +161,40 @@ Aucun n'est corrigé ici : ils ne se manifestent qu'avec plusieurs machines.
 5. `FixedPoint` (`rust/fpnum/src/lib.rs`) n'a pas de `#[repr(C)]` alors que le
    `HWFloat` `#[repr(C)]` qui l'encapsule est transmuté vers Pascal — correct
    aujourd'hui par chance, à verrouiller.
-6. Priorité d'opérateurs dans `doStepGenericFaller`
+6. Le moteur ne laisse au frontend aucune fenêtre pour finir son travail de fin
+   de partie (voir la section précédente) : `SendIPCAndWaitReply` au lieu de
+   `SendIPC` sur le `'q'` final réglerait le problème à la source.
+7. `invertCursor` (`hedgewars/uTouch.pas`) était un état mis en cache écrit par
+   le seul `ProcessTouch`, qui ne tourne pas quand une démo ou le réseau pilote
+   les équipes — d'où une caméra tactile inversée en relecture. Corrigé chez
+   nous en évaluant la condition au moment du geste ; touche aussi le réseau.
+8. `isOnCurrentHog` (`hedgewars/uTouch.pas`) déréférence `CurrentHedgehog^.Gear`
+   sans garde, atteignable au doigt entre deux tours.
+9. `if SendHealthStatsOn then` sans `begin`/`end` dans `uStats.pas SendStats` :
+   seule la première affectation est conditionnée. Sans effet aujourd'hui (le
+   drapeau vaut `true` par défaut), mais ce n'est pas ce que le code dit.
+10. Priorité d'opérateurs dans `doStepGenericFaller`
    (`hedgewars/uGearsHandlersMess.pas`) : `and` liant plus fort que `or`, le
    repositionnement aléatoire se déclenche bien plus souvent que l'intention
    apparente du code. Non corrigé ici — c'est un choix de gameplay amont, et le
    modifier changerait les trajectoires.
+
+## La fin de partie n'attend personne (corrigé côté frontend, à revoir pour le réseau)
+
+Le moteur ne se synchronise avec le frontend à aucun moment de sa sortie : il
+envoie `'q'`, passe en `gsExit`, démonte tout (`freeEverything`) puis appelle
+`halt()` — quelques dizaines de millisecondes plus tard le processus est mort,
+tantôt proprement, tantôt sur le SIGSEGV connu d'`exit()`. Le frontend, lui,
+avait encore ses écritures de fin de partie à faire. La 0.3.0 s'en sort en
+posant statistiques et issue sur disque **dès l'arrivée du classement**, soit
+~3 s avant le `'q'` (le fondu au noir de `gtATFinishGame`).
+
+Pour le réseau, la même absence de poignée de main mérite mieux : un client qui
+doit encore transmettre ses dernières trames au serveur au moment où le moteur
+se coupe les perdra. La correction propre côté amont serait de remplacer
+`SendIPC(_S'q')` (`hedgewars/uGearsHandlersMess.pas`) par un
+`SendIPCAndWaitReply` : le moteur attendrait le pong du frontend, donc la fin
+réelle de son travail. À proposer en même temps que le reste.
 
 ## Tests à faire dès la première partie en réseau
 

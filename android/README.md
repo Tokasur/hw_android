@@ -208,6 +208,12 @@ controllers at startup).
   `NetGameConnection` slots in beside `GameConnection`.
 * Data is copied out of the APK on first launch (~2×218 MB on disk). A
   zero-copy `PHYSFS_Io` mount of the APK is the planned optimization.
+* The end-of-match results screen used to go missing now and then, in any
+  language, since 0.2.9. The engine never waits for the frontend — it sends
+  `q`, tears itself down and calls `halt()` — so whether the results survived
+  was a race against the process dying. Since 0.3.0 (and 0.2.10 for the older
+  line) the stats and the outcome are written as soon as the engine sends its
+  final ranking, about three seconds earlier.
 * Replays record and play back faithfully since 0.3.0. They were off in 0.2.9
   because every replayed turn reported "Desync detected": the cause was not the
   recording but the engine itself, which lost the sign of its fixed-point
