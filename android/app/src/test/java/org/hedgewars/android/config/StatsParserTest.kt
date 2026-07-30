@@ -66,6 +66,19 @@ class StatsParserTest {
     }
 
     @Test
+    fun `the match counts as over only once a ranking has arrived`() {
+        // The frames that stream during play must not look like the end: the
+        // game process banks its results on this signal, seconds before the
+        // engine reports the end and takes the process down with it.
+        val parser = StatsParser()
+        assertEquals(false, parser.hasFinalRankings)
+        feedAll(parser, listOf('H' to "$red 100", 'H' to "$blue 43", 'r' to "Alpha wins!"))
+        assertEquals(false, parser.hasFinalRankings)
+        feedAll(parser, listOf('R' to "1", 'P' to "$red 3 Alpha"))
+        assertTrue(parser.hasFinalRankings)
+    }
+
+    @Test
     fun `teams of one clan share a rank when no explicit rank is sent`() {
         val parser = StatsParser()
         feedAll(parser, listOf(
