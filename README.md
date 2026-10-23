@@ -9,8 +9,6 @@ This repository is an Android port of Hedgewars forked from hedgewars/hw. The Fr
 [![minSdk 21](https://img.shields.io/badge/minSdk-21-green.svg)](android/app/build.gradle.kts)
 [![targetSdk 36](https://img.shields.io/badge/targetSdk-36-green.svg)](android/app/build.gradle.kts)
 [![NDK r28c](https://img.shields.io/badge/NDK-r28c-orange.svg)](android/scripts/bootstrap-toolchain.sh)
-[![ABIs arm64-v8a armeabi-v7a x86_64](https://img.shields.io/badge/ABIs-arm64_v8a-armeabi_v7a-x86_64-blue.svg)](android/scripts/build-native-deps.sh)
-[![CI](https://github.com/Tokasur/hw_android/actions/workflows/ci.yml/badge.svg)](https://github.com/Tokasur/hw_android/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/Tokasur/hw_android?label=release)](https://github.com/Tokasur/hw_android/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Tokasur/hw_android/total?label=downloads)](https://github.com/Tokasur/hw_android/releases/latest)
 
